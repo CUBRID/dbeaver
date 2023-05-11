@@ -20,8 +20,8 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
-import org.jkiss.dbeaver.ext.cubrid.GenericConstants;
-import org.jkiss.dbeaver.ext.cubrid.model.meta.GenericMetaObject;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
@@ -37,67 +37,67 @@ import java.sql.Types;
 import java.util.Locale;
 
 /**
- * Generic tables cache implementation
+ * Cubrid tables cache implementation
  */
-public class TableCache extends JDBCStructLookupCache<GenericStructContainer, GenericTableBase, GenericTableColumn> {
+public class TableCache extends JDBCStructLookupCache<CubridStructContainer, CubridTableBase, CubridTableColumn> {
 
     private static final Log log = Log.getLog(TableCache.class);
 
-    final GenericDataSource dataSource;
-    final GenericMetaObject tableObject;
-    final GenericMetaObject columnObject;
+    final CubridDataSource dataSource;
+    final CubridMetaObject tableObject;
+    final CubridMetaObject columnObject;
 
-    protected TableCache(GenericDataSource dataSource)
+    protected TableCache(CubridDataSource dataSource)
     {
-        super(GenericUtils.getColumn(dataSource, GenericConstants.OBJECT_TABLE, JDBCConstants.TABLE_NAME));
+        super(CubridUtils.getColumn(dataSource, CubridConstants.OBJECT_TABLE, JDBCConstants.TABLE_NAME));
         this.dataSource = dataSource;
-        this.tableObject = dataSource.getMetaObject(GenericConstants.OBJECT_TABLE);
-        this.columnObject = dataSource.getMetaObject(GenericConstants.OBJECT_TABLE_COLUMN);
-        setListOrderComparator(DBUtils.<GenericTableBase>nameComparatorIgnoreCase());
+        this.tableObject = dataSource.getMetaObject(CubridConstants.OBJECT_TABLE);
+        this.columnObject = dataSource.getMetaObject(CubridConstants.OBJECT_TABLE_COLUMN);
+        setListOrderComparator(DBUtils.<CubridTableBase>nameComparatorIgnoreCase());
     }
 
-    public GenericDataSource getDataSource()
+    public CubridDataSource getDataSource()
     {
         return dataSource;
     }
 
     @NotNull
     @Override
-    public JDBCStatement prepareLookupStatement(@NotNull JDBCSession session, @NotNull GenericStructContainer owner, @Nullable GenericTableBase object, @Nullable String objectName) throws SQLException {
+    public JDBCStatement prepareLookupStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @Nullable CubridTableBase object, @Nullable String objectName) throws SQLException {
         return dataSource.getMetaModel().prepareTableLoadStatement(session, owner, object, objectName);
     }
 
     @Nullable
     @Override
-    protected GenericTableBase fetchObject(@NotNull JDBCSession session, @NotNull GenericStructContainer owner, @NotNull JDBCResultSet dbResult)
+    protected CubridTableBase fetchObject(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @NotNull JDBCResultSet dbResult)
         throws SQLException, DBException
     {
         return getDataSource().getMetaModel().createTableImpl(session, owner, tableObject, dbResult);
     }
 
     @Override
-    protected JDBCStatement prepareChildrenStatement(@NotNull JDBCSession session, @NotNull GenericStructContainer owner, @Nullable GenericTableBase forTable)
+    protected JDBCStatement prepareChildrenStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @Nullable CubridTableBase forTable)
         throws SQLException
     {
         return dataSource.getMetaModel().prepareTableColumnLoadStatement(session, owner, forTable);
     }
 
     @Override
-    protected GenericTableColumn fetchChild(@NotNull JDBCSession session, @NotNull GenericStructContainer owner, @NotNull GenericTableBase table, @NotNull JDBCResultSet dbResult)
+    protected CubridTableColumn fetchChild(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @NotNull CubridTableBase table, @NotNull JDBCResultSet dbResult)
         throws SQLException, DBException
     {
         boolean trimName = dataSource.getMetaModel().isTrimObjectNames();
         String columnName = trimName ?
-            GenericUtils.safeGetStringTrimmed(columnObject, dbResult, JDBCConstants.COLUMN_NAME)
-            : GenericUtils.safeGetString(columnObject, dbResult, JDBCConstants.COLUMN_NAME);
-        int valueType = GenericUtils.safeGetInt(columnObject, dbResult, JDBCConstants.DATA_TYPE);
-        int sourceType = GenericUtils.safeGetInt(columnObject, dbResult, JDBCConstants.SOURCE_DATA_TYPE);
-        String typeName = GenericUtils.safeGetStringTrimmed(columnObject, dbResult, JDBCConstants.TYPE_NAME);
-        long columnSize = GenericUtils.safeGetLong(columnObject, dbResult, JDBCConstants.COLUMN_SIZE);
-        boolean isNotNull = GenericUtils.safeGetInt(columnObject, dbResult, JDBCConstants.NULLABLE) == DatabaseMetaData.columnNoNulls;
+            CubridUtils.safeGetStringTrimmed(columnObject, dbResult, JDBCConstants.COLUMN_NAME)
+            : CubridUtils.safeGetString(columnObject, dbResult, JDBCConstants.COLUMN_NAME);
+        int valueType = CubridUtils.safeGetInt(columnObject, dbResult, JDBCConstants.DATA_TYPE);
+        int sourceType = CubridUtils.safeGetInt(columnObject, dbResult, JDBCConstants.SOURCE_DATA_TYPE);
+        String typeName = CubridUtils.safeGetStringTrimmed(columnObject, dbResult, JDBCConstants.TYPE_NAME);
+        long columnSize = CubridUtils.safeGetLong(columnObject, dbResult, JDBCConstants.COLUMN_SIZE);
+        boolean isNotNull = CubridUtils.safeGetInt(columnObject, dbResult, JDBCConstants.NULLABLE) == DatabaseMetaData.columnNoNulls;
         Integer scale = null;
         try {
-            scale = GenericUtils.safeGetInteger(columnObject, dbResult, JDBCConstants.DECIMAL_DIGITS);
+            scale = CubridUtils.safeGetInteger(columnObject, dbResult, JDBCConstants.DECIMAL_DIGITS);
         } catch (Throwable e) {
             log.warn("Error getting column scale", e);
         }
@@ -107,21 +107,21 @@ public class TableCache extends JDBCStructLookupCache<GenericStructContainer, Ge
         }
         int radix = 10;
         try {
-            radix = GenericUtils.safeGetInt(columnObject, dbResult, JDBCConstants.NUM_PREC_RADIX);
+            radix = CubridUtils.safeGetInt(columnObject, dbResult, JDBCConstants.NUM_PREC_RADIX);
         } catch (Exception e) {
             log.warn("Error getting column radix", e);
         }
-        String defaultValue = GenericUtils.safeGetString(columnObject, dbResult, JDBCConstants.COLUMN_DEF);
-        String remarks = GenericUtils.safeGetString(columnObject, dbResult, JDBCConstants.REMARKS);
-        long charLength = GenericUtils.safeGetLong(columnObject, dbResult, JDBCConstants.CHAR_OCTET_LENGTH);
-        int ordinalPos = GenericUtils.safeGetInt(columnObject, dbResult, JDBCConstants.ORDINAL_POSITION);
-        boolean autoIncrement = "YES".equals(GenericUtils.safeGetStringTrimmed(columnObject, dbResult, JDBCConstants.IS_AUTOINCREMENT));
-        boolean autoGenerated = "YES".equals(GenericUtils.safeGetStringTrimmed(columnObject, dbResult, JDBCConstants.IS_GENERATEDCOLUMN));
+        String defaultValue = CubridUtils.safeGetString(columnObject, dbResult, JDBCConstants.COLUMN_DEF);
+        String remarks = CubridUtils.safeGetString(columnObject, dbResult, JDBCConstants.REMARKS);
+        long charLength = CubridUtils.safeGetLong(columnObject, dbResult, JDBCConstants.CHAR_OCTET_LENGTH);
+        int ordinalPos = CubridUtils.safeGetInt(columnObject, dbResult, JDBCConstants.ORDINAL_POSITION);
+        boolean autoIncrement = "YES".equals(CubridUtils.safeGetStringTrimmed(columnObject, dbResult, JDBCConstants.IS_AUTOINCREMENT));
+        boolean autoGenerated = "YES".equals(CubridUtils.safeGetStringTrimmed(columnObject, dbResult, JDBCConstants.IS_GENERATEDCOLUMN));
         if (!CommonUtils.isEmpty(typeName)) {
             // Check for identity modifier [DBSPEC: MS SQL]
-            if (typeName.toUpperCase(Locale.ENGLISH).endsWith(GenericConstants.TYPE_MODIFIER_IDENTITY)) {
+            if (typeName.toUpperCase(Locale.ENGLISH).endsWith(CubridConstants.TYPE_MODIFIER_IDENTITY)) {
                 autoIncrement = true;
-                typeName = typeName.substring(0, typeName.length() - GenericConstants.TYPE_MODIFIER_IDENTITY.length());
+                typeName = typeName.substring(0, typeName.length() - CubridConstants.TYPE_MODIFIER_IDENTITY.length());
             }
             // Check for empty modifiers [MS SQL]
             if (typeName.endsWith("()")) {
@@ -152,12 +152,12 @@ public class TableCache extends JDBCStructLookupCache<GenericStructContainer, Ge
     }
 
     @Override
-    public void beforeCacheLoading(JDBCSession session, GenericStructContainer owner) throws DBException {
+    public void beforeCacheLoading(JDBCSession session, CubridStructContainer owner) throws DBException {
        // Do nothing
     }
 
     @Override
-    public void afterCacheLoading(JDBCSession session, GenericStructContainer owner) {
+    public void afterCacheLoading(JDBCSession session, CubridStructContainer owner) {
         // Do nothing
     }
 }

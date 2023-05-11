@@ -19,8 +19,8 @@ package org.jkiss.dbeaver.ext.cubrid.model;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.ext.cubrid.GenericConstants;
-import org.jkiss.dbeaver.ext.cubrid.model.meta.GenericMetaObject;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCStatement;
@@ -35,23 +35,23 @@ import java.util.Locale;
 /**
  * Index cache implementation
  */
-class ConstraintKeysCache extends JDBCCompositeCache<GenericStructContainer, GenericTableBase, GenericUniqueKey, GenericTableConstraintColumn> {
+class ConstraintKeysCache extends JDBCCompositeCache<CubridStructContainer, CubridTableBase, CubridUniqueKey, CubridTableConstraintColumn> {
 
-    private final GenericMetaObject pkObject;
+    private final CubridMetaObject pkObject;
 
     ConstraintKeysCache(TableCache tableCache)
     {
         super(
             tableCache,
-            GenericTableBase.class,
-            GenericUtils.getColumn(tableCache.getDataSource(), GenericConstants.OBJECT_PRIMARY_KEY, JDBCConstants.TABLE_NAME),
-            GenericUtils.getColumn(tableCache.getDataSource(), GenericConstants.OBJECT_PRIMARY_KEY, JDBCConstants.PK_NAME));
-        pkObject = tableCache.getDataSource().getMetaObject(GenericConstants.OBJECT_PRIMARY_KEY);
+            CubridTableBase.class,
+            CubridUtils.getColumn(tableCache.getDataSource(), CubridConstants.OBJECT_PRIMARY_KEY, JDBCConstants.TABLE_NAME),
+            CubridUtils.getColumn(tableCache.getDataSource(), CubridConstants.OBJECT_PRIMARY_KEY, JDBCConstants.PK_NAME));
+        pkObject = tableCache.getDataSource().getMetaObject(CubridConstants.OBJECT_PRIMARY_KEY);
     }
 
     @NotNull
     @Override
-    protected JDBCStatement prepareObjectsStatement(JDBCSession session, GenericStructContainer owner, GenericTableBase forParent)
+    protected JDBCStatement prepareObjectsStatement(JDBCSession session, CubridStructContainer owner, CubridTableBase forParent)
         throws SQLException
     {
         try {
@@ -71,13 +71,13 @@ class ConstraintKeysCache extends JDBCCompositeCache<GenericStructContainer, Gen
     }
 
     protected String getDefaultObjectName(JDBCResultSet dbResult, String parentName) {
-        int keySeq = GenericUtils.safeGetInt(pkObject, dbResult, JDBCConstants.KEY_SEQ);
+        int keySeq = CubridUtils.safeGetInt(pkObject, dbResult, JDBCConstants.KEY_SEQ);
         return parentName.toUpperCase(Locale.ENGLISH) + "_PK";
     }
 
     @Nullable
     @Override
-    protected GenericUniqueKey fetchObject(JDBCSession session, GenericStructContainer owner, GenericTableBase parent, String pkName, JDBCResultSet dbResult)
+    protected CubridUniqueKey fetchObject(JDBCSession session, CubridStructContainer owner, CubridTableBase parent, String pkName, JDBCResultSet dbResult)
         throws SQLException, DBException
     {
         return owner.getDataSource().getMetaModel().createConstraintImpl(
@@ -90,16 +90,16 @@ class ConstraintKeysCache extends JDBCCompositeCache<GenericStructContainer, Gen
 
     @Nullable
     @Override
-    protected GenericTableConstraintColumn[] fetchObjectRow(
+    protected CubridTableConstraintColumn[] fetchObjectRow(
         JDBCSession session,
-        GenericTableBase parent, GenericUniqueKey object, JDBCResultSet dbResult)
+        CubridTableBase parent, CubridUniqueKey object, JDBCResultSet dbResult)
         throws SQLException, DBException
     {
         return parent.getDataSource().getMetaModel().createConstraintColumnsImpl(session, parent, object, pkObject, dbResult);
     }
 
     @Override
-    protected void cacheChildren(DBRProgressMonitor monitor, GenericUniqueKey primaryKey, List<GenericTableConstraintColumn> rows)
+    protected void cacheChildren(DBRProgressMonitor monitor, CubridUniqueKey primaryKey, List<CubridTableConstraintColumn> rows)
     {
         primaryKey.setColumns(rows);
     }
