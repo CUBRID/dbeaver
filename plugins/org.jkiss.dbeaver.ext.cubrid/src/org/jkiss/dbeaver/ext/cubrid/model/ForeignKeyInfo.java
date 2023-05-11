@@ -17,7 +17,7 @@
 package org.jkiss.dbeaver.ext.cubrid.model;
 
 import org.jkiss.code.NotNull;
-import org.jkiss.dbeaver.ext.cubrid.model.meta.GenericMetaObject;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCConstants;
 
@@ -39,17 +39,17 @@ public class ForeignKeyInfo {
     String pkName;
     int deferabilityNum;
 
-    public void fetchColumnsInfo (GenericMetaObject fkObject, @NotNull JDBCResultSet dbResult) {
-        pkColumnName = GenericUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.PKCOLUMN_NAME);
-        fkTableCatalog = GenericUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FKTABLE_CAT);
-        fkTableSchema = GenericUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FKTABLE_SCHEM);
-        fkTableName = GenericUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FKTABLE_NAME);
-        fkColumnName = GenericUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FKCOLUMN_NAME);
-        keySeq = GenericUtils.safeGetInt(fkObject, dbResult, JDBCConstants.KEY_SEQ);
-        updateRuleNum = GenericUtils.safeGetInt(fkObject, dbResult, JDBCConstants.UPDATE_RULE);
-        deleteRuleNum = GenericUtils.safeGetInt(fkObject, dbResult, JDBCConstants.DELETE_RULE);
-        fkName = GenericUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FK_NAME);
-        pkName = GenericUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.PK_NAME);
-        deferabilityNum = GenericUtils.safeGetInt(fkObject, dbResult, JDBCConstants.DEFERRABILITY);
+    public void fetchColumnsInfo (CubridMetaObject fkObject, @NotNull JDBCResultSet dbResult) {
+        pkColumnName = CubridUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.PKCOLUMN_NAME);
+        fkTableCatalog = CubridUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FKTABLE_CAT);
+        fkTableSchema = CubridUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FKTABLE_SCHEM);
+        fkTableName = CubridUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FKTABLE_NAME);
+        fkColumnName = CubridUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FKCOLUMN_NAME);
+        keySeq = CubridUtils.safeGetInt(fkObject, dbResult, JDBCConstants.KEY_SEQ);
+        updateRuleNum = CubridUtils.safeGetInt(fkObject, dbResult, JDBCConstants.UPDATE_RULE);
+        deleteRuleNum = CubridUtils.safeGetInt(fkObject, dbResult, JDBCConstants.DELETE_RULE);
+        fkName = CubridUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.FK_NAME);
+        pkName = CubridUtils.safeGetStringTrimmed(fkObject, dbResult, JDBCConstants.PK_NAME);
+        deferabilityNum = CubridUtils.safeGetInt(fkObject, dbResult, JDBCConstants.DEFERRABILITY);
     }
 }
