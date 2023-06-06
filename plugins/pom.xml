@@ -134,9 +134,7 @@
     <module>org.jkiss.dbeaver.team.git</module>
             
     <module>org.jkiss.dbeaver.headless</module>
-          
-    <module>org.jkiss.dbeaver.ext.cubrid.ui</module>
-      
+                
   </modules>
       
   <profiles>
@@ -168,6 +166,8 @@
         <module>org.jkiss.dbeaver.ext.bigquery.ui</module>
                         
         <module>org.jkiss.dbeaver.ext.clickhouse.ui</module>
+        
+        <module>org.jkiss.dbeaver.ext.cubrid.ui</module>
                         
         <module>org.jkiss.dbeaver.ext.exasol.ui</module>
                         
