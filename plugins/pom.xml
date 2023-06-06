@@ -48,7 +48,7 @@
     <module>org.jkiss.dbeaver.ext.bigquery</module>
             
     <module>org.jkiss.dbeaver.ext.clickhouse</module>
-    
+
     <module>org.jkiss.dbeaver.ext.cubrid</module>
             
     <module>org.jkiss.dbeaver.ext.databricks</module>
