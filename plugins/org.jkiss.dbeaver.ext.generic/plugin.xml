@@ -1101,7 +1101,8 @@
                         supportedConfigurationTypes="MANUAL,URL"
                         webURL="https://www.cubrid.org/"
                         categories="sql">
-                    <file type="jar" path="maven:/cubrid:cubrid-jdbc:RELEASE"/>
+                    <!-- At the moment HTTPS link doesn't work. But we can't keep HTTP anyway. -->
+                    <file type="jar" path="https://ftp.cubrid.org/CUBRID_Drivers/JDBC_Driver/JDBC-10.1.0.7663-cubrid.jar"/>
                 </driver>
 
                 <!-- Solr -->
