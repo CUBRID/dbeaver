@@ -182,6 +182,24 @@
                 </propertyGroup>
 
             </driver-properties>
+            
+            <drivers managable="true">
+                <driver
+                        id="cubrid_jdbc"
+                        label="CUBRID"
+                        icon="icons/cubrid_icon.png"
+                        iconBig="icons/cubrid_icon_big.png"
+                        class="cubrid.jdbc.driver.CUBRIDDriver"
+                        sampleURL="jdbc:CUBRID:{host}:{port}:{database}:::"
+                        defaultPort="33000"
+                        description="CUBRID JDBC driver"
+                        supportedConfigurationTypes="MANUAL,URL"
+                        webURL="https://www.cubrid.org/"
+                        categories="sql">
+                    <file type="jar" path="maven:/cubrid:cubrid-jdbc:RELEASE"/>
+                    <replace provider="generic" driver="cubrid_jdbc"/>                
+                </driver>
+             </drivers>
         </datasource>
     </extension>
 
@@ -331,6 +349,12 @@
     <extension point="org.jkiss.dbeaver.sqlDialect">
         <dialect id="cubrid" parent="basic" class="org.jkiss.dbeaver.ext.cubrid.model.CubridSQLDialect" label="Cubrid" description="Dialect based on JDBC API information." icon="#database_icon_default" hidden="true">
         </dialect>
+    </extension>
+    
+    <extension point="org.jkiss.dbeaver.mavenRepository">
+        <repository id="cubrid-maven-repo" name="Cubrid Repository" url="https://maven.cubrid.org">
+            <scope group="cubrid"/>
+        </repository>
     </extension>
 
 </plugin>
