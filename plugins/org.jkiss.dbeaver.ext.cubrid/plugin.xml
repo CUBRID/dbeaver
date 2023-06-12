@@ -194,10 +194,29 @@
                         defaultPort="33000"
                         description="CUBRID JDBC driver"
                         supportedConfigurationTypes="MANUAL,URL"
-                        webURL="https://www.cubrid.org/"
+                        webURL="https://www.cubrid.org/manual/en/11.2/api/jdbc.html#configuration-connection"
                         categories="sql">
                     <file type="jar" path="maven:/cubrid:cubrid-jdbc:RELEASE"/>
-                    <replace provider="generic" driver="cubrid_jdbc"/>                
+                    <replace provider="generic" driver="cubrid_jdbc"/>
+
+                    <property name="altHosts" value=""/>
+                    <property name="rcTime" value="600"/>
+                    <property name="loadBalance" value="false"/>  
+                    <property name="connectTimeout" value="30"/>             
+                    <property name="queryTimeout" value="0"/>
+                    <property name="charset" value="utf-8"/>
+                    <property name="zeroDateTimeBehavior" value="exception"/> 
+                    <property name="logFile" value="cubrid_jdbc.log"/>  
+                    <property name="logOnException" value="false"/>  
+                    <property name="logSlowQueries" value="false"/>  
+                    <property name="slowQueryThresholdMillis" value="60000"/>  
+                    <property name="useLazyConnection" value="false"/>  
+                    <property name="useSSL" value="false"/>
+                    <property name="clientCacheSize" value="1"/>
+                    <property name="usePreparedStmtCache" value="false"/>
+                    <property name="preparedStmtCacheSize" value="25"/>
+                    <property name="preparedStmtCacheSqlLimit" value="256"/>
+                    <property name="hold_cursor" value="true"/>
                 </driver>
              </drivers>
         </datasource>
