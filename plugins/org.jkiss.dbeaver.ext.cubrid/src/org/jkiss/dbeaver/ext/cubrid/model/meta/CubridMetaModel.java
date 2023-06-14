@@ -24,6 +24,7 @@ import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
 import org.jkiss.dbeaver.ext.cubrid.model.*;
 import org.jkiss.dbeaver.model.*;
 import org.jkiss.dbeaver.model.exec.DBCFeatureNotSupportedException;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCPreparedStatement;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCStatement;
@@ -589,6 +590,18 @@ public class CubridMetaModel {
             tableNamePattern,
             null).getSourceStatement();
     }
+    
+    public JDBCStatement prepareSystemTableLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @Nullable CubridTableBase object, @Nullable String objectName)
+            throws SQLException
+        {
+           String sql= "select *, class_name as TABLE_NAME from db_class\r\n"
+           		+ "where \r\n"
+           		+ "class_type='CLASS' \r\n"
+           		+ "and is_system_class='YES'";
+           final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+
+           return dbStat;
+        }
 
     /**
      * Some drivers return columns, tables or other objects names with extra spaces around (like FireBird)
@@ -910,7 +923,7 @@ public class CubridMetaModel {
     }
 
     public boolean supportsNotNullColumnModifiers(DBSObject object) {
-        return true;
+        return false;
     }
 
     public boolean isColumnNotNullByDefault() {
