@@ -17,15 +17,27 @@
 package org.jkiss.dbeaver.ext.cubrid.model;
 
 import org.jkiss.code.NotNull;
+import org.jkiss.dbeaver.ext.cubrid.CubridSQLFormatter;
 import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaColumn;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaModel;
 import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
+import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.dbeaver.model.exec.DBCException;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCStatement;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
+import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.sql.SQLDialect;
 import org.jkiss.dbeaver.model.sql.SQLUtils;
+import org.jkiss.dbeaver.model.struct.DBSEntity;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Map;
+
 
 /**
  * Cubrid utils
@@ -163,5 +175,30 @@ public class CubridUtils {
     public static boolean canAlterTable(@NotNull DBSObject object) {
         // Either object is not yet persisted (so no alter is required) or database supports table altering
         return !object.isPersisted() || object.getDataSource().getSQLDialect().supportsAlterTableStatement();
+    }
+    
+    public static String getViewDDL(DBRProgressMonitor monitor, @NotNull CubridView object, Map<String, Object> options) throws DBCException {
+    	
+    	JDBCSession session = DBUtils.openMetaSession(monitor, object, "load view ddl " + object.getName());
+    	CubridMetaModel cubridMetaModel = object.getDataSource().getMetaModel();
+    	String ddl = "no ddl";
+    	String regex = "\\[|\\]";
+    	
+    	try {
+			JDBCStatement statement = cubridMetaModel.prepareViewDDLStatement(session, object);
+			statement.executeStatement();
+			JDBCResultSet dbResult = statement.getResultSet();
+			
+			while(dbResult.next()) {
+				ddl = "create or replace view \"" + dbResult.getString("View") + "\" as " + dbResult.getString("Create View");
+				ddl = ddl.replaceAll(regex, "\"");		
+				ddl = new CubridSQLFormatter(ddl).format();
+				break;
+			}	
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+    	
+    	return ddl;
     }
 }

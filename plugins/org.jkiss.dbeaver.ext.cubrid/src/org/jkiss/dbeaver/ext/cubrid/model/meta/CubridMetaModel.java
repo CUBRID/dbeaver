@@ -602,7 +602,28 @@ public class CubridMetaModel {
 
            return dbStat;
         }
+    
+    public JDBCStatement prepareSystemViewLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @Nullable CubridTableBase object, @Nullable String objectName)
+            throws SQLException
+        {
+           String sql= "select *, case when class_type = 'VCLASS' \r\n"
+           		+ "then 'VIEW' end as TABLE_TYPE,\r\n"
+           		+ "class_name as TABLE_NAME from db_class\r\n"
+           		+ "where class_type='VCLASS'\r\n"
+           		+ "and is_system_class='YES'";
+           final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
 
+           return dbStat;
+        }
+
+    public JDBCStatement prepareViewDDLStatement(@NotNull JDBCSession session, @Nullable CubridTableBase object)
+            throws SQLException
+        {
+           String sql= String.format("show create view %s", object.getName());
+           JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+           return dbStat;
+        }
+    
     /**
      * Some drivers return columns, tables or other objects names with extra spaces around (like FireBird)
      * For this reason we usually trim it from our side
@@ -684,7 +705,7 @@ public class CubridMetaModel {
     }
 
     public String getViewDDL(DBRProgressMonitor monitor, CubridView sourceObject, Map<String, Object> options) throws DBException {
-        return "-- View definition not available";
+        return CubridUtils.getViewDDL(monitor, sourceObject, options);
     }
 
     public String getTableDDL(DBRProgressMonitor monitor, CubridTableBase sourceObject, Map<String, Object> options) throws DBException {

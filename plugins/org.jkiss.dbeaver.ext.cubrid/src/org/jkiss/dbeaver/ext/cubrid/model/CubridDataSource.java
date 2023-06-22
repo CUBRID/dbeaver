@@ -24,6 +24,7 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.dbeaver.ModelPreferences;
 import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
 import org.jkiss.dbeaver.ext.cubrid.model.CubridObjectContainer.SystemTableCache;
+import org.jkiss.dbeaver.ext.cubrid.model.CubridObjectContainer.SystemViewCache;
 import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaModel;
 import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.*;
@@ -124,6 +125,10 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     @Override
     public CubridDataSource getDataSource() {
         return this;
+    }
+    
+    public CubridObjectContainer getCubridObjectContainer() {
+    	return this.structureContainer;
     }
 
     @Override
@@ -381,6 +386,11 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     public SystemTableCache getSystemTableCache() {
     	return structureContainer.getSystemTableCache();
     }
+    
+    @Override
+    public SystemViewCache getSystemViewCache() {
+    	return structureContainer.getSystemViewCache();
+    }
 
     @Override
     public IndexCache getIndexCache() {
@@ -415,6 +425,11 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     @Override
     public List<? extends CubridView> getViews(DBRProgressMonitor monitor) throws DBException {
         return structureContainer == null ? null : structureContainer.getViews(monitor);
+    }
+    
+    @Override
+    public List<? extends CubridView> getSystemViews(DBRProgressMonitor monitor) throws DBException {
+    	return structureContainer == null ? null : structureContainer.getSystemViews(monitor);
     }
 
     @Override
