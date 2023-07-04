@@ -33,6 +33,7 @@ import org.jkiss.dbeaver.model.impl.jdbc.JDBCConstants;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.impl.jdbc.struct.JDBCTable;
 import org.jkiss.dbeaver.model.meta.Association;
+import org.jkiss.dbeaver.model.meta.IPropertyValueListProvider;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.meta.PropertyLength;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
@@ -60,6 +61,10 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
     private boolean isSystem;
     private boolean isUtility;
     private String description;
+    private CubridOwner owner;
+    private CubridOwner oldOwner;
+    private boolean reuseOID;
+    private CubridCollation collation;
     private Long rowCount;
     private List<? extends CubridTrigger> triggers;
     private final String tableCatalogName;
@@ -75,15 +80,32 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
         if (this.tableType == null) {
             this.tableType = "";
         }
-
+        
         if (dbResult != null) {
             this.description = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, JDBCConstants.REMARKS);
+            this.reuseOID = (CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.REUSE_OID)).equals("YES") ? true : false;
+            
+            String collation_name = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.COLLATION);
+            
+            for(CubridCollation cbCollation : getDataSource().getCollations()){
+              if(cbCollation.getName().equals(collation_name)) {
+                this.collation = cbCollation;
+              }
+            }
+            
+            for(CubridOwner cbOwner : getDataSource().getOwners()){
+                if(cbOwner.getName().equals(CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.OWNER))) {
+                  this.owner = cbOwner;
+                  this.oldOwner = cbOwner;
+                }
+              }
+            
         }
 
         final CubridMetaModel metaModel = container.getDataSource().getMetaModel();
         this.isSystem = metaModel.isSystemTable(this);
         this.isUtility = metaModel.isUtilityTable(this);
-
+        
         boolean mergeEntities = container.getDataSource().isMergeEntities();
         if (mergeEntities && dbResult != null) {
             tableCatalogName = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, JDBCConstants.TABLE_CATALOG);
@@ -93,7 +115,7 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
             tableSchemaName = null;
         }
     }
-
+    
     @Override
     public TableCache getCache() {
         return getContainer().getTableCache();
@@ -272,13 +294,43 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
 
     @Nullable
     @Override
-    @Property(viewable = true, editableExpr = "object.dataSource.metaModel.tableCommentEditable", updatableExpr = "object.dataSource.metaModel.tableCommentEditable", length = PropertyLength.MULTILINE, order = 100)
+    @Property(viewable = true, editableExpr = "object.dataSource.metaModel.tableCommentEditable", updatableExpr = "object.dataSource.metaModel.tableCommentEditable", length = PropertyLength.MULTILINE, order = 3)
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    @Nullable
+    @Property(viewable = true, editable = true, updatable = true, listProvider = OwnerListProvider.class, order = 2)
+    public CubridOwner getOwner() {
+        return owner;
+    }
+    
+    public CubridOwner getOldOwner() {
+    	return this.oldOwner;
+    }
+
+    public void setOwner(CubridOwner owner) {
+        this.owner = owner;
+    }
+    
+    @Nullable
+    @Property(viewable = true, editable = true, updatable = true, listProvider = CollationListProvider.class, order = 9)
+    public CubridCollation getCollation() {
+        return collation;
+    }
+
+    public void setCollation(CubridCollation collation) {
+        this.collation = collation;
+    }
+    
+    @Property(viewable = true, order = 52)
+    public boolean isReuseOID()
+    {
+        return reuseOID;
     }
 
     @Override
@@ -324,6 +376,7 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
         return rowCount;
     }
 
+    
     @Nullable
     public Long getRowCountFromIndexes(DBRProgressMonitor monitor) {
         try {
@@ -528,5 +581,31 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
 
     public Collection<DBSIndexType> getTableIndexTypes() {
         return Collections.singletonList(DBSIndexType.OTHER);
+    }
+    
+    public static class CollationListProvider implements IPropertyValueListProvider<CubridTableBase> {
+        @Override
+        public boolean allowCustomValue()
+        {
+            return false;
+        }
+        @Override
+        public Object[] getPossibleValues(CubridTableBase object)
+        {
+        	return object.getDataSource().getCollations().toArray();
+        }
+    }
+    
+    public static class OwnerListProvider implements IPropertyValueListProvider<CubridTableBase> {
+        @Override
+        public boolean allowCustomValue()
+        {
+            return false;
+        }
+        @Override
+        public Object[] getPossibleValues(CubridTableBase object)
+        {
+        	return object.getDataSource().getOwners().toArray();
+        }
     }
 }

@@ -24,8 +24,10 @@ import org.jkiss.dbeaver.ext.cubrid.model.*;
 import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPObject;
+import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.edit.DBECommandContext;
 import org.jkiss.dbeaver.model.edit.DBEObjectManager;
+import org.jkiss.dbeaver.model.edit.DBEObjectRenamer;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.impl.edit.SQLDatabasePersistAction;
@@ -49,7 +51,7 @@ import java.util.Map;
 /**
  * Cubrid table manager
  */
-public class CubridTableManager extends SQLTableManager<CubridTableBase, CubridStructContainer> {
+public class CubridTableManager extends SQLTableManager<CubridTableBase, CubridStructContainer> implements DBEObjectRenamer<CubridTableBase> {
 
     private static final Class<? extends DBSObject>[] CHILD_TYPES = CommonUtils.array(
         CubridTableColumn.class,
@@ -118,11 +120,22 @@ public class CubridTableManager extends SQLTableManager<CubridTableBase, CubridS
     @Override
     protected void addObjectExtraActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actions, NestedObjectCommand<CubridTableBase, PropertyHandler> command, Map<String, Object> options) throws DBException {
         CubridTableBase tableBase = command.getObject();
+        String table = tableBase.getOldOwner().getName() + "." + tableBase.getFullyQualifiedName(DBPEvaluationContext.DDL);
+        if (command.hasProperty("owner")) {
+        	actions.add(new SQLDatabasePersistAction(
+        			"Change Table Owner",
+                    "ALTER TABLE " + table + " OWNER TO " + tableBase.getOwner().getName()));
+        }
         if (command.hasProperty(DBConstants.PROP_ID_DESCRIPTION)) {
             actions.add(new SQLDatabasePersistAction(
                     "Comment table",
-                    "COMMENT ON TABLE " + tableBase.getFullyQualifiedName(DBPEvaluationContext.DDL) +
-                            " IS " + SQLUtils.quoteString(tableBase, CommonUtils.notEmpty(tableBase.getDescription()))));
+                    "ALTER TABLE " + table + " COMMENT = " + SQLUtils.quoteString(tableBase, CommonUtils.notEmpty(tableBase.getDescription()))));
+        }
+        
+        if (command.hasProperty("collation")) {
+        	actions.add(new SQLDatabasePersistAction(
+        			"Collation table",
+                    "ALTER TABLE " + table + " COLLATE " + tableBase.getCollation().getName()));
         }
 
         if (!tableBase.isPersisted()) {
@@ -134,5 +147,41 @@ public class CubridTableManager extends SQLTableManager<CubridTableBase, CubridS
             }
         }
     }
+    
+//    @Override
+//    protected void addObjectModifyActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actionList, ObjectChangeCommand command, Map<String, Object> options) {
+//        CubridTableBase table = command.getObject();
+//        actionList.add(
+//            new SQLDatabasePersistAction(
+//            "Change Collation",
+//            "ALTER TABLE " + table.getOwner() + "." + table.getFullyQualifiedName(DBPEvaluationContext.DDL) + " COLLATE " + table.getCollation().getName())
+//        );
+//    }
+    
+    @Override
+    protected void appendTableModifiers(DBRProgressMonitor monitor, CubridTableBase tableBase, NestedObjectCommand tableProps, StringBuilder ddl, boolean alter) {
+        if (tableBase instanceof CubridTable) {
+            CubridTable table = (CubridTable) tableBase;
+        }
+    }
+    
+    @Override
+    protected void addObjectRenameActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actions, ObjectRenameCommand command, Map<String, Object> options) {
+        final CubridDataSource dataSource = command.getObject().getDataSource();
+        actions.add(
+            new SQLDatabasePersistAction(
+                "Rename table",
+                "RENAME TABLE " +
+                	command.getObject().getOldOwner().getName() + "." + DBUtils.getQuotedIdentifier(dataSource, command.getOldName()) +
+                    " TO " + command.getObject().getOldOwner().getName() + "." + DBUtils.getQuotedIdentifier(dataSource, command.getNewName())) //$NON-NLS-1$
+        );
+    }
+
+	@Override
+	public void renameObject(DBECommandContext commandContext, CubridTableBase object, Map<String, Object> options,
+			String newName) throws DBException {
+			processObjectRename(commandContext, object, options, newName);
+		
+	}
 
 }

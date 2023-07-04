@@ -568,35 +568,22 @@ public class CubridMetaModel {
     public JDBCStatement prepareTableLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @Nullable CubridTableBase object, @Nullable String objectName)
         throws SQLException
     {
-        String tableNamePattern;
-        if (object == null && objectName == null) {
-            final DBSObjectFilter tableFilters = session.getDataSource().getContainer().getObjectFilter(CubridTable.class, owner, false);
+  	
+    	   String sql= "select *, class_name as TABLE_NAME, \r\n"
+    	   		+ "case when class_type = 'CLASS' then 'TABLE'\r\n"
+    	   		+ "when class_type = 'VCLASS' then 'VIEW' end as TABLE_TYPE, comment as REMARKS from db_class \r\n"
+    	   		+ "where is_system_class='NO'";
+           final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
 
-            if (tableFilters != null && tableFilters.hasSingleMask()) {
-                tableNamePattern = tableFilters.getSingleMask();
-                if (!CommonUtils.isEmpty(tableNamePattern)) {
-                    tableNamePattern = SQLUtils.makeSQLLike(tableNamePattern);
-                }
-            } else {
-                tableNamePattern = owner.getDataSource().getAllObjectsPattern();
-            }
-        } else {
-            tableNamePattern = JDBCUtils.escapeWildCards(session, (object != null ? object.getName() : objectName));
-        }
-
-        return session.getMetaData().getTables(
-            owner.getCatalog() == null ? null : owner.getCatalog().getName(),
-            owner.getSchema() == null || DBUtils.isVirtualObject(owner.getSchema()) ? null : JDBCUtils.escapeWildCards(session, owner.getSchema().getName()),
-            tableNamePattern,
-            null).getSourceStatement();
+           return dbStat;
     }
     
     public JDBCStatement prepareSystemTableLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @Nullable CubridTableBase object, @Nullable String objectName)
             throws SQLException
         {
-           String sql= "select *, class_name as TABLE_NAME from db_class\r\n"
-           		+ "where \r\n"
-           		+ "class_type='CLASS' \r\n"
+           String sql= "select *, class_name as TABLE_NAME, case when class_type = 'CLASS' \r\n"
+        		+ "then 'TABLE' end as TABLE_TYPE from db_class\r\n"
+           		+ "where class_type='CLASS' \r\n"
            		+ "and is_system_class='YES'";
            final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
 
@@ -936,11 +923,11 @@ public class CubridMetaModel {
     // Comments
 
     public boolean isTableCommentEditable() {
-        return false;
+        return true;
     }
 
     public boolean isTableColumnCommentEditable() {
-        return false;
+        return true;
     }
 
     public boolean supportsNotNullColumnModifiers(DBSObject object) {

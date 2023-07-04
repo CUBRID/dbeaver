@@ -108,5 +108,11 @@ public class CubridConstants {
     public static final String TABLE_TYPE_TABLE = "TABLE";
 
     public static final String BASE_CONSTRAINT_NAME = "new_key";
-
+    
+    public static final String[] COLLATIONS = {"iso88591_bin", "utf8_bin", "iso88591_en_cs", "iso88591_en_ci", 
+    		"utf8_en_cs", "utf8_en_ci", "utf8_tr_cs", "utf8_ko_cs", "euckr_bin", "binary"};
+    public static final String OWNER_QUERY = "select name from db_user";
+    public static final String REUSE_OID = "is_reuse_oid_class";
+    public static final String COLLATION = "collation";
+    public static final String OWNER = "owner_name";
 }
