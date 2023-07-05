@@ -114,5 +114,6 @@ public class CubridConstants {
     public static final String OWNER_QUERY = "select name from db_user";
     public static final String REUSE_OID = "is_reuse_oid_class";
     public static final String COLLATION = "collation";
+    public static final String DESCRIPTION = "description";
     public static final String OWNER = "owner_name";
 }
