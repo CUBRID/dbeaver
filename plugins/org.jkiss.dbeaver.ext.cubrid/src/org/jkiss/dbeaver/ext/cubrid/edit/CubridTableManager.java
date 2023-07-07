@@ -126,18 +126,24 @@ public class CubridTableManager extends SQLTableManager<CubridTableBase, CubridS
     @Override
     protected void addObjectModifyActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actionList, ObjectChangeCommand command, Map<String, Object> options) {
         CubridTableBase table = command.getObject();
-        actionList.add(
-            new SQLDatabasePersistAction(
-            "Change Owner",
-            "ALTER TABLE " + table.getOldOwner().getName() + "." + table.getFullyQualifiedName(DBPEvaluationContext.DDL) + " OWNER TO " + table.getOwner().getName()));
-        actionList.add(
-            new SQLDatabasePersistAction(
-            "Change Comment",
-            "ALTER TABLE " + table + " COMMENT = " + SQLUtils.quoteString(table, CommonUtils.notEmpty(table.getDescription()))));
-        actionList.add(
-        	new SQLDatabasePersistAction(
-    		"Chnage Collation",
-            "ALTER TABLE " + table + " COLLATE " + table.getCollation().getName()));
+        if (command.hasProperty(CubridConstants.OWNER)) {
+        	actionList.add(
+                new SQLDatabasePersistAction(
+                "Change Owner",
+                "ALTER TABLE " + table.getOldOwner().getName() + "." + table + " OWNER TO " + table.getOwner().getName()));
+        }
+        if (command.hasProperty(CubridConstants.DESCRIPTION)) {
+	        actionList.add(
+	            new SQLDatabasePersistAction(
+	            "Change Comment",
+	            "ALTER TABLE " + table.getOldOwner().getName() + "." + table + " COMMENT = " + SQLUtils.quoteString(table, CommonUtils.notEmpty(table.getDescription()))));
+        }
+        if (command.hasProperty(CubridConstants.COLLATION)) {
+	        actionList.add(
+	        	new SQLDatabasePersistAction(
+	    		"Change Collation",
+	            "ALTER TABLE " + table.getOldOwner().getName() + "." + table + " COLLATE " + table.getCollation().getName()));
+        }
     }
     
     @Override

@@ -108,7 +108,7 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
             }
             
             for(CubridOwner cbOwner : getDataSource().getOwners()){
-                if(cbOwner.getName().equals(CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.OWNER))) {
+                if(cbOwner.getName().equals(CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.OWNER_NAME))) {
                   this.owner = cbOwner;
                   this.oldOwner = cbOwner;
                 }
