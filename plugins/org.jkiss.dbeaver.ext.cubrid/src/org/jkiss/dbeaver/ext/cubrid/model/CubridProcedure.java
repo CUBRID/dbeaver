@@ -51,7 +51,7 @@ public class CubridProcedure extends AbstractProcedure<CubridDataSource, CubridS
     private DBSProcedureType procedureType;
     private List<CubridProcedureParameter> columns;
     private String source;
-    private CubridFunctionResultType functionResultType;
+    private String functionResultType;
 
     public CubridProcedure(
         CubridStructContainer container,
@@ -59,27 +59,27 @@ public class CubridProcedure extends AbstractProcedure<CubridDataSource, CubridS
         String specificName,
         String description,
         DBSProcedureType procedureType,
-        CubridFunctionResultType functionResultType)
+        String functionResultType)
     {
         super(container, true, procedureName, description);
         this.procedureType = procedureType;
-        this.functionResultType = functionResultType;
+        this.functionResultType = functionResultType.toUpperCase();
         this.specificName = specificName;
     }
 
-    @Property(viewable = true, order = 3)
+//    @Property(viewable = true, order = 3)
     public CubridCatalog getCatalog()
     {
         return getContainer().getCatalog();
     }
 
-    @Property(viewable = true, order = 4)
+//    @Property(viewable = true, order = 4)
     public CubridSchema getSchema()
     {
         return getContainer().getSchema();
     }
 
-    @Property(viewable = true, order = 5)
+//    @Property(viewable = true, order = 5)
     public CubridPackage getPackage()
     {
         return getContainer() instanceof CubridPackage ? (CubridPackage) getContainer() : null;
@@ -93,7 +93,7 @@ public class CubridProcedure extends AbstractProcedure<CubridDataSource, CubridS
     }
 
     @Property(viewable = true, order = 7)
-    public CubridFunctionResultType getFunctionResultType() {
+    public String getFunctionResultType() {
         return functionResultType;
     }
 
