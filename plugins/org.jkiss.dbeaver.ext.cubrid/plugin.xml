@@ -127,23 +127,23 @@
                                 </items>
                             </items>
                         </folder>
-                        <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridProcedure" label="%tree.procedures.node.name" icon="#procedures" description="Procedures" visibleIf="object.dataSource.info.supportsStoredCode()">
-                            <items label="%tree.procedures.node.name" itemLabel="%tree.procedure.node.name" path="procedure" property="proceduresOnly" icon="#procedure">
-                                <folder label="%tree.procedure_columns.node.name" icon="#columns" description="Procedure parameters">
-                                    <items label="%tree.procedure_columns.node.name" itemLabel="%tree.column.node.name" path="column" property="parameters" navigable="false"/>
+                        <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridProcedure" label="%tree.procedures_function.node.name" icon="#procedures" description="%tree.procedures_function.node.name" visibleIf="object.dataSource.info.supportsStoredCode()">
+                            
+                
+                            
+                                <folder label="%tree.procedures.node.name" icon="#procedures" description="Procedures">
+                                    <items label="%tree.procedures.node.name" path="column" property="proceduresOnly">
+                                    </items>
                                 </folder>
-                            </items>
-                            <items label="%tree.package.node.name" path="package" property="packages" icon="#package">
-                                <items label="%tree.procedures.node.name" itemLabel="%tree.procedure.node.name" path="procedure" property="procedures" icon="#procedure">
-                                    <items label="%tree.procedure_columns.node.name" itemLabel="%tree.column.node.name" path="column" property="parameters" navigable="false" inline="true"/>
-                                </items>
-                            </items>
+                                
+                                <folder label="%tree.function.node.name" icon="#procedures" description="Function">
+                                    <items label="%tree.functions.node.name" path="function" property="functionsOnly" icon="#function">
+                                
+                            		</items>
+                                </folder>
+                            
                         </folder>
-                        <folder label="%tree.functions.node.name" icon="#functions" description="Functions" visibleIf="object.dataSource.info.supportsStoredCode() &amp;&amp; object.dataSource.splitProceduresAndFunctions()">
-                            <items label="%tree.functions.node.name" itemLabel="%tree.function.node.name" path="function" property="functionsOnly" icon="#function">
-                                <items label="%tree.function_columns.node.name" itemLabel="%tree.column.node.name" path="column" property="parameters" navigable="false"/>
-                            </items>
-                        </folder>
+             
                         <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridSequence" label="%tree.sequences.node.name" icon="#sequences" description="%tree.sequences.node.tip" visibleIf="object.dataSource.metaModel.supportsSequences(object.dataSource)">
                             <items label="%tree.sequence.node.name" path="sequence" property="sequences" icon="#sequence"/>
                         </folder>
