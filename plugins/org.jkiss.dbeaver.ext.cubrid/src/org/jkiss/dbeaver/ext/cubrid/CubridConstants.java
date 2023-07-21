@@ -90,6 +90,8 @@ public class CubridConstants {
     public static final String TERM_CATALOG = "catalog";
     public static final String TERM_SCHEMA = "schema";
     public static final String TERM_PROCEDURE = "procedure";
+    public static final String RETURN_TYPE = "return_type";
+    public static final String TERM_FUNCTION = "function";
 
     public static final String OBJECT_CATALOG = "catalog";
     public static final String OBJECT_SCHEMA = "schema";
