@@ -74,9 +74,10 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
     private boolean isSystem;
     private boolean isUtility;
     private String description;
+    
     private CubridOwner owner;
     private CubridOwner oldOwner;
-    private boolean reuseOID;
+    private boolean reuseOID = true;
     private CubridCollation collation;
     private Long rowCount;
     private List<? extends CubridTrigger> triggers;
@@ -94,27 +95,33 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
         if (this.tableType == null) {
             this.tableType = "";
         }
-        
+        String owner_name;
+        String collation_name;
         if (dbResult != null) {
             this.description = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, JDBCConstants.REMARKS);
             this.reuseOID = (CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.REUSE_OID)).equals("YES") ? true : false;
             
-            String collation_name = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.COLLATION);
+            collation_name = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.COLLATION);
+            owner_name = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.OWNER_NAME);
             
-            for(CubridCollation cbCollation : getDataSource().getCollations()){
-              if(cbCollation.getName().equals(collation_name)) {
-                this.collation = cbCollation;
+            
+        }else {
+        	owner_name = getDataSource().getContainer().getConnectionConfiguration().getUserName().toUpperCase();
+        	collation_name = CubridConstants.DEFAULT_COLLATION;
+        }
+        
+        for(CubridCollation cbCollation : getDataSource().getCollations()){
+            if(cbCollation.getName().equals(collation_name)) {
+              this.collation = cbCollation;
+            }
+          }
+           
+          for(CubridOwner cbOwner : getDataSource().getOwners()){
+              if(cbOwner.getName().equals(owner_name)) {
+                this.owner = cbOwner;
+                this.oldOwner = cbOwner;
               }
             }
-            
-            for(CubridOwner cbOwner : getDataSource().getOwners()){
-                if(cbOwner.getName().equals(CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.OWNER_NAME))) {
-                  this.owner = cbOwner;
-                  this.oldOwner = cbOwner;
-                }
-              }
-            
-        }
 
         final CubridMetaModel metaModel = container.getDataSource().getMetaModel();
         this.isSystem = metaModel.isSystemTable(this);

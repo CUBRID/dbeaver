@@ -27,17 +27,22 @@ import org.jkiss.dbeaver.ext.cubrid.model.CubridUtils;
 import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaModel;
 import org.jkiss.dbeaver.model.DBConstants;
 import org.jkiss.dbeaver.model.DBPDataKind;
+import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.edit.DBECommandContext;
+import org.jkiss.dbeaver.model.edit.DBEObjectRenamer;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
+import org.jkiss.dbeaver.model.edit.prop.DBECommandComposite;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.impl.edit.DBECommandAbstract;
+import org.jkiss.dbeaver.model.impl.edit.SQLDatabasePersistAction;
+import org.jkiss.dbeaver.model.impl.sql.edit.SQLObjectEditor;
 import org.jkiss.dbeaver.model.impl.sql.edit.struct.SQLTableColumnManager;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.DBSDataType;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.cache.DBSObjectCache;
 import org.jkiss.utils.CommonUtils;
-
 import java.sql.Types;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +50,8 @@ import java.util.Map;
 /**
  * Cubrid table column manager
  */
-public class CubridTableColumnManager extends SQLTableColumnManager<CubridTableColumn, CubridTableBase> {
-
+public class CubridTableColumnManager extends SQLTableColumnManager<CubridTableColumn, CubridTableBase> implements DBEObjectRenamer<CubridTableColumn> {
+	
     @Nullable
     @Override
     public DBSObjectCache<? extends DBSObject, CubridTableColumn> getObjectsCache(CubridTableColumn object) {
@@ -73,7 +78,7 @@ public class CubridTableColumnManager extends SQLTableColumnManager<CubridTableC
         CubridTableBase tableBase = (CubridTableBase) container;
         DBSDataType columnType = findBestDataType(tableBase, DBConstants.DEFAULT_DATATYPE_NAMES);
 
-        int columnSize = columnType != null && columnType.getDataKind() == DBPDataKind.STRING ? 100 : 0;
+        int columnSize = 0;
         CubridTableColumn column = tableBase.getDataSource().getMetaModel().createTableColumnImpl(
             monitor,
             null,
@@ -92,44 +97,110 @@ public class CubridTableColumnManager extends SQLTableColumnManager<CubridTableC
             null,
             null,
             false,
+            false,
+            false,
+            "",
+            0,
+            0,
             false
         );
         column.setPersisted(false);
         return column;
     }
-
+    
     @Override
     public StringBuilder getNestedDeclaration(DBRProgressMonitor monitor, CubridTableBase owner, DBECommandAbstract<CubridTableColumn> command, Map<String, Object> options) {
-        StringBuilder decl = super.getNestedDeclaration(monitor, owner, command, options);
-        addIncrementClauseToNestedDeclaration(command, decl);
+    	StringBuilder decl = new StringBuilder(40);
+    	CubridTableColumn column = command.getObject();
+        String columnName = DBUtils.getQuotedIdentifier(column.getDataSource(), column.getName());
+        
+        if (command instanceof SQLObjectEditor.ObjectRenameCommand) {
+            columnName = DBUtils.getQuotedIdentifier(column.getDataSource(), ((ObjectRenameCommand) command).getNewName());
+        }
+        decl.append(columnName);
+        
+        for (ColumnModifier<CubridTableColumn> modifier : new ColumnModifier[] {DataTypeModifier}) {
+            modifier.appendModifier(monitor, column, decl, command);
+        }
+        if(column.getDataKind() == DBPDataKind.STRING && column.getCollation() != null) {
+        	decl.append(" COLLATE ").append(SQLUtils.quoteString(column, column.getCollation().getName()));
+    	}
+        for (ColumnModifier<CubridTableColumn> modifier : new ColumnModifier[] {NotNullModifier}) {
+            modifier.appendModifier(monitor, column, decl, command);
+        }
+        if(column.isInUniqueKey()) {
+        	decl.append(" UNIQUE");
+        }
+        if(!CommonUtils.isEmpty(column.getDefaultValue())){
+        	if(column.isShared()) {
+            	decl.append(" SHARED ").append(SQLUtils.quoteString(column, column.getDefaultValue()));
+            }else {
+            	decl.append(" DEFAULT ").append(SQLUtils.quoteString(column, column.getDefaultValue()));
+            }
+        }
+        if(column.isAutoIncrement() && column.getDataKind() == DBPDataKind.NUMERIC) {
+    		Integer initialValue = column.getInitialValue() == null ? 1 : column.getInitialValue();
+    		Integer incrementValue = column.getIncrementValue() == null ? 1 : column.getIncrementValue();
+            decl.append(" AUTO_INCREMENT(").append(initialValue).append(",").append(incrementValue).append(")");
+        }   
+        if (!CommonUtils.isEmpty(column.getDescription())) {
+            decl.append(" COMMENT ").append(SQLUtils.quoteString(column, column.getDescription()));
+        }
+                               
         return decl;
     }
 
-    public void addIncrementClauseToNestedDeclaration(DBECommandAbstract<CubridTableColumn> command, StringBuilder decl) {
-        final CubridTableColumn column = command.getObject();
-        if (column.isAutoIncrement()) {
-            final String autoIncrementClause = column.getDataSource().getMetaModel().getAutoIncrementClause(column);
-            if (autoIncrementClause != null && !autoIncrementClause.isEmpty()) {
-                decl.append(" ").append(autoIncrementClause); //$NON-NLS-1$
+    public StringBuilder addColumnNestedDeclaration(DBRProgressMonitor monitor, DBECommandAbstract<CubridTableColumn> command) {
+    	StringBuilder decl = new StringBuilder(40);
+    	final CubridTableColumn column = command.getObject();
+    	
+    	String columnName = DBUtils.getQuotedIdentifier(column.getDataSource(), column.getName());
+        if (command instanceof SQLObjectEditor.ObjectRenameCommand) {
+            columnName = DBUtils.getQuotedIdentifier(column.getDataSource(), ((ObjectRenameCommand) command).getNewName());
+        }
+        decl.append(columnName);
+        
+        for (ColumnModifier<CubridTableColumn> modifier : new ColumnModifier[] {DataTypeModifier, NullNotNullModifierConditional}) {
+            modifier.appendModifier(monitor, column, decl, command);
+        }
+        if(column.isInUniqueKey()) {
+        	decl.append(" UNIQUE");
+        }   	
+        if(!CommonUtils.isEmpty(column.getDefaultValue())){
+        	if(column.isShared()) {
+            	decl.append(" SHARED ").append(SQLUtils.quoteString(column, column.getDefaultValue()));
+            }else {
+            	decl.append(" DEFAULT ").append(SQLUtils.quoteString(column, column.getDefaultValue()));
             }
         }
-    }
-
-    @Override
-    protected ColumnModifier[] getSupportedModifiers(CubridTableColumn column, Map<String, Object> options) {
-        // According to SQL92 DEFAULT comes before constraints
-        CubridMetaModel metaModel = column.getDataSource().getMetaModel();
-        if (!metaModel.supportsNotNullColumnModifiers(column)) {
-            return new ColumnModifier[]{
-                DataTypeModifier, DefaultModifier
-            };
-        } else {
-            return new ColumnModifier[]{
-                DataTypeModifier, DefaultModifier,
-                metaModel.isColumnNotNullByDefault() ? NullNotNullModifier : NotNullModifier
-            };
+        if(column.isAutoIncrement()) {
+           decl.append(" AUTO_INCREMENT");
         }
+        if(column.getDataKind() == DBPDataKind.STRING) {
+    		decl.append(" COLLATE ").append(SQLUtils.quoteString(column, column.getCollation().getName()));
+    	}
+        if(!CommonUtils.isEmpty(column.getDescription())) {
+            decl.append(" COMMENT ").append(SQLUtils.quoteString(column, column.getDescription()));
+        }
+        
+        return decl;
     }
+    
+//    @Override
+//    protected ColumnModifier[] getSupportedModifiers(CubridTableColumn column, Map<String, Object> options) {
+//        // According to SQL92 DEFAULT comes before constraints
+//        CubridMetaModel metaModel = column.getDataSource().getMetaModel();
+//        if (!metaModel.supportsNotNullColumnModifiers(column)) {
+//            return new ColumnModifier[]{
+//                DataTypeModifier, metaModel.isColumnNotNullByDefault() ? NullNotNullModifier : NotNullModifier, DefaultModifier
+//            };
+//        } else {
+//            return new ColumnModifier[]{
+//                DataTypeModifier, DefaultModifier,
+//                metaModel.isColumnNotNullByDefault() ? NullNotNullModifier : NotNullModifier
+//            };
+//        }
+//    }
 
     @Override
     protected long getDDLFeatures(CubridTableColumn object) {
@@ -148,11 +219,43 @@ public class CubridTableColumnManager extends SQLTableColumnManager<CubridTableC
 
     @Override
     protected void addObjectModifyActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actionList, ObjectChangeCommand command, Map<String, Object> options) throws DBException {
-        CubridTableColumn column = command.getObject();
-        // Add more or less standard COMMENT ON if comment was actually edited (i.e. it is editable at least).
-        if (command.hasProperty(DBConstants.PROP_ID_DESCRIPTION)) {
-            addColumnCommentAction(actionList, column, column.getTable());
+    	final CubridTableColumn column = command.getObject();
+    	String table = column.getTable().getOwner().getName() + "." + column.getTable();
+    	
+    	if(column.isAutoIncrement()) {
+        	if(column.getInitialValue() == null) {
+        		 throw new NullPointerException("Column Initial Value is required.");
+        	}        
+        }
+    	
+        actionList.add(
+                new SQLDatabasePersistAction(
+                    "Modify column",
+                    "ALTER TABLE " + table + " MODIFY COLUMN " + addColumnNestedDeclaration(monitor, command)));
+        if (column.isAutoIncrement() && command.hasProperty("initialValue")) {
+        	actionList.add(
+                new SQLDatabasePersistAction(
+                "Alter Auto Increment",
+                "ALTER TABLE " + table + " AUTO_INCREMENT = " + column.getInitialValue()));
         }
     }
+    
+    @Override
+    protected void addObjectRenameActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actions, ObjectRenameCommand command, Map<String, Object> options)
+    {
+    	final CubridTableColumn column = command.getObject();	
+    	actions.add(
+    	new SQLDatabasePersistAction(
+    	"Rename column",
+    	"ALTER TABLE " + column.getTable().getOwner().getName() + "." + column.getTable() + " RENAME COLUMN " +
+    	DBUtils.getQuotedIdentifier(column.getDataSource(), command.getOldName()) + " AS " +
+    	DBUtils.getQuotedIdentifier(column.getDataSource(), command.getNewName())));
+    }
 
+	@Override
+	public void renameObject(DBECommandContext commandContext, CubridTableColumn object, Map<String, Object> options,
+			String newName) throws DBException {
+		processObjectRename(commandContext, object, options, newName);
+		
+	}
 }

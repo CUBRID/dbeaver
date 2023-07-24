@@ -74,6 +74,7 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     boolean catalogsFiltered;
     private ArrayList<CubridOwner> owners;
     private ArrayList<CubridCollation> collations;
+    private ArrayList<CubridColumnTypeName> columnTypeNames;
 
     private String queryGetActiveDB;
     private String querySetActiveDB;
@@ -222,9 +223,15 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     public Collection<CubridOwner> getOwners() {
     	return owners;
     }
+    
     public Collection<CubridCollation> getCollations() {
     	return collations;
     }
+    
+    public Collection<CubridColumnTypeName> getColumnTypeNames() {
+    	return columnTypeNames;
+    }
+    
     public String getAllObjectsPattern() {
         return allObjectsPattern;
     }
@@ -595,6 +602,12 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
         for (String name: CubridConstants.COLLATIONS) {
         	CubridCollation collation = new CubridCollation(this, name);
         	collations.add(collation);
+        }
+        
+        columnTypeNames = new ArrayList<CubridColumnTypeName>();
+        for (String name: CubridConstants.DATA_TYPES) {
+        	CubridColumnTypeName dataType = new CubridColumnTypeName(this, name);
+        	columnTypeNames.add(dataType);
         }
         
 	    owners = new ArrayList<CubridOwner>();

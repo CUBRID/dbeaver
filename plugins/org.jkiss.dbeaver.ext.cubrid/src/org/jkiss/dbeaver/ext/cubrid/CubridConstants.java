@@ -119,4 +119,8 @@ public class CubridConstants {
     public static final String DESCRIPTION = "description";
     public static final String OWNER = "owner";
     public static final String OWNER_NAME = "owner_name";
+    public static final String DEFAULT_COLLATION = "utf8_bin";
+    public static final String[] DATA_TYPES = {"BIGINT", "BIT", "BIT VARYING", "BLOB", "CHAR", "CLOB", "DATE", 
+    		"DATETIME", "DOUBLE", "ENUM", "FLOAT", "INTEGER", "MONETARY", "MULTISET", "NCHAR", "NCHAR VARYING", 
+    		"NUMERIC", "SEQUENCE", "SET", "SMALLINT", "STRING", "TIME", "TIMESTAMP", "VARCHAR"};
 }

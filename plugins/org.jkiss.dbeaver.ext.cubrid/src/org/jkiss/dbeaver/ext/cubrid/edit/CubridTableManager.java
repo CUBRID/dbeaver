@@ -21,19 +21,14 @@ import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
 import org.jkiss.dbeaver.ext.cubrid.model.*;
-import org.jkiss.dbeaver.ext.cubrid.model.CubridTable;
-import org.jkiss.dbeaver.model.DBConstants;
-import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPObject;
 import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.edit.DBECommandContext;
 import org.jkiss.dbeaver.model.edit.DBEObjectManager;
 import org.jkiss.dbeaver.model.edit.DBEObjectRenamer;
 import org.jkiss.dbeaver.model.edit.DBEPersistAction;
-import org.jkiss.dbeaver.model.exec.DBCException;
 import org.jkiss.dbeaver.model.exec.DBCExecutionContext;
 import org.jkiss.dbeaver.model.impl.edit.SQLDatabasePersistAction;
-import org.jkiss.dbeaver.model.impl.sql.edit.SQLStructEditor.StructCreateCommand;
 import org.jkiss.dbeaver.model.impl.sql.edit.struct.SQLTableManager;
 import org.jkiss.dbeaver.model.messages.ModelMessages;
 import org.jkiss.dbeaver.model.navigator.DBNDatabaseFolder;
@@ -48,7 +43,6 @@ import org.jkiss.dbeaver.model.struct.cache.DBSObjectCache;
 import org.jkiss.dbeaver.model.struct.rdb.DBSTableIndex;
 import org.jkiss.dbeaver.utils.GeneralUtils;
 import org.jkiss.utils.CommonUtils;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -249,5 +243,20 @@ public class CubridTableManager extends SQLTableManager<CubridTableBase, CubridS
 
         appendTableModifiers(monitor, table, tableProps, createQuery, false);
         actions.add( 0, new SQLDatabasePersistAction(ModelMessages.model_jdbc_create_new_table, createQuery.toString()) );
+    }
+	
+	@Override
+    protected void addObjectDeleteActions(DBRProgressMonitor monitor, DBCExecutionContext executionContext, List<DBEPersistAction> actions, ObjectDeleteCommand command, Map<String, Object> options)
+    {
+        CubridTableBase object = command.getObject();
+        final String tableName = DBUtils.getEntityScriptName(object, options);
+        actions.add(
+            new SQLDatabasePersistAction(
+                ModelMessages.model_jdbc_drop_table,
+                "DROP " + getDropTableType(object) +  //$NON-NLS-2$
+                " " + object.getOwner().getName() +"." + tableName + //$NON-NLS-2$
+                (!DBUtils.isView(object) && CommonUtils.getOption(options, OPTION_DELETE_CASCADE) ? " CASCADE" : "") //$NON-NLS-2$
+            )
+        );
     }
 }
