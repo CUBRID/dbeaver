@@ -138,7 +138,13 @@ public class CubridTableColumnManager extends SQLTableColumnManager<CubridTableC
             	decl.append(" DEFAULT ").append(SQLUtils.quoteString(column, column.getDefaultValue()));
             }
         }
-        if(column.isAutoIncrement() && column.getDataKind() == DBPDataKind.NUMERIC) {
+        if(column.isAutoIncrement() && column.getTypeName() == "INTEGER") {
+        	if(column.getInitialValue() == null) {
+        		 throw new NullPointerException("Initial Value of column" + columnName + " is required.");
+        	}
+        	if(column.getIncrementValue() == null) {
+	       		 throw new NullPointerException("Increment Value of column" + columnName + " is required.");
+	       	}
     		Integer initialValue = column.getInitialValue() == null ? 1 : column.getInitialValue();
     		Integer incrementValue = column.getIncrementValue() == null ? 1 : column.getIncrementValue();
             decl.append(" AUTO_INCREMENT(").append(initialValue).append(",").append(incrementValue).append(")");
@@ -173,10 +179,10 @@ public class CubridTableColumnManager extends SQLTableColumnManager<CubridTableC
             	decl.append(" DEFAULT ").append(SQLUtils.quoteString(column, column.getDefaultValue()));
             }
         }
-        if(column.isAutoIncrement()) {
+        if(column.isAutoIncrement() && column.getTypeName() == "INTEGER") {
            decl.append(" AUTO_INCREMENT");
         }
-        if(column.getDataKind() == DBPDataKind.STRING) {
+        if(column.getDataKind() == DBPDataKind.STRING && column.getCollation() != null) {       
     		decl.append(" COLLATE ").append(SQLUtils.quoteString(column, column.getCollation().getName()));
     	}
         if(!CommonUtils.isEmpty(column.getDescription())) {
@@ -185,22 +191,6 @@ public class CubridTableColumnManager extends SQLTableColumnManager<CubridTableC
         
         return decl;
     }
-    
-//    @Override
-//    protected ColumnModifier[] getSupportedModifiers(CubridTableColumn column, Map<String, Object> options) {
-//        // According to SQL92 DEFAULT comes before constraints
-//        CubridMetaModel metaModel = column.getDataSource().getMetaModel();
-//        if (!metaModel.supportsNotNullColumnModifiers(column)) {
-//            return new ColumnModifier[]{
-//                DataTypeModifier, metaModel.isColumnNotNullByDefault() ? NullNotNullModifier : NotNullModifier, DefaultModifier
-//            };
-//        } else {
-//            return new ColumnModifier[]{
-//                DataTypeModifier, DefaultModifier,
-//                metaModel.isColumnNotNullByDefault() ? NullNotNullModifier : NotNullModifier
-//            };
-//        }
-//    }
 
     @Override
     protected long getDDLFeatures(CubridTableColumn object) {

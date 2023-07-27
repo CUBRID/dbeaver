@@ -139,6 +139,12 @@ public class CubridTableColumn extends JDBCTableColumn<CubridTableBase> implemen
         return sourceType;
     }
     
+    @Property(viewable = true, hidden = true)
+    public int getOrdinalPosition()
+    {
+        return ordinalPosition;
+    }
+    
     //Name
     @NotNull
     @Property(viewable = true, editable = true, updatable = true, optional = false, order = 10)
@@ -162,7 +168,15 @@ public class CubridTableColumn extends JDBCTableColumn<CubridTableBase> implemen
     }
     
     //Length
-    @Property(viewable = true, editable = true, updatable = true, order = 40, valueRenderer = DBDummyNumberTransformer.class)
+    public boolean isSupportLength() {
+    	if(super.getDataKind() == DBPDataKind.STRING) {
+    		return true;
+    	} else {
+    	return false;
+    	}
+    }
+    
+    @Property(viewable = true, editable = true, updatableExpr = "object.supportLength", order = 40, valueRenderer = DBDummyNumberTransformer.class)
     @Override
     public long getMaxLength()
     {
@@ -214,7 +228,7 @@ public class CubridTableColumn extends JDBCTableColumn<CubridTableBase> implemen
     }
 
     //Auto Increment  
-    @Property(viewable = true, editable = true, updatableExpr = "object.supportAutoIncrement", order = 51)
+    @Property(viewable = true, editable = true, updatable = false, order = 51)
     public boolean isAutoIncrement()
     {
         return autoIncrement;
@@ -239,7 +253,7 @@ public class CubridTableColumn extends JDBCTableColumn<CubridTableBase> implemen
         this.initialValue = initialValue;
     }
     
-    @Property(viewable = true, editable = true, order = 53)
+    @Property(viewable = true, editable = true, updatable = false, order = 53)
     public Integer getIncrementValue()
     {
     	return incrementValue;
@@ -364,4 +378,3 @@ public class CubridTableColumn extends JDBCTableColumn<CubridTableBase> implemen
     }
 
 }
-
