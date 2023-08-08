@@ -866,15 +866,22 @@ public class CubridMetaModel {
     // Sequences
 
     public boolean supportsSequences(@NotNull CubridDataSource dataSource) {
-        return false;
+        return true;
     }
 
     public JDBCStatement prepareSequencesLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer container) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
+    	
+    	String sql= "select * from db_serial";
+        final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+
+        return dbStat;
     }
 
-    public CubridSequence createSequenceImpl(@NotNull JDBCSession session, @NotNull CubridStructContainer container, @NotNull JDBCResultSet dbResult) throws DBException {
-        throw new DBCFeatureNotSupportedException();
+    public CubridSequence createSequenceImpl(@NotNull JDBCSession session, @NotNull CubridStructContainer container, CubridMetaObject sequenceObject, @NotNull JDBCResultSet dbResult) throws DBException {
+    	
+    	CubridSequence sequence = new CubridSequence(container, sequenceObject, dbResult);
+        
+        return sequence;    
     }
 
     public boolean handleSequenceCacheReadingError(Exception error) {

@@ -108,5 +108,16 @@ public class CubridConstants {
     public static final String TABLE_TYPE_TABLE = "TABLE";
 
     public static final String BASE_CONSTRAINT_NAME = "new_key";
+    
+    public static final String OBJECT_SEQUENCE = "sequence";
+    public static final String SEQUENCE_NAME = "name";
+    public static final String COMMENT = "comment";
+    public static final String CURRENT_VALUE = "current_val";
+    public static final String MIN_VAL = "min_val";
+    public static final String MAX_VAL = "max_val";
+    public static final String INCREMENT_VAL = "increment_val";
+    public static final String CYCLIC = "cyclic";
+    public static final String CACHED_NUM = "cached_num";
+
 
 }
