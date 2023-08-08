@@ -24,19 +24,33 @@ import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
 import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaModel;
 import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.*;
+import org.jkiss.dbeaver.model.data.DBDDataFilter;		
+import org.jkiss.dbeaver.model.data.DBDDataReceiver;		
+import org.jkiss.dbeaver.model.data.DBDPseudoAttribute;		
+import org.jkiss.dbeaver.model.exec.DBCException;		
+import org.jkiss.dbeaver.model.exec.DBCExecutionSource;		
+import org.jkiss.dbeaver.model.exec.DBCResultSet;
 import org.jkiss.dbeaver.model.exec.DBCSession;
+import org.jkiss.dbeaver.model.exec.DBCStatement;		
+import org.jkiss.dbeaver.model.exec.DBCStatementType;		
+import org.jkiss.dbeaver.model.exec.DBCStatistics;		
+import org.jkiss.dbeaver.model.exec.DBExecUtils;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCDatabaseMetaData;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCStatement;
 import org.jkiss.dbeaver.model.impl.AbstractExecutionSource;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCConstants;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.impl.jdbc.struct.JDBCTable;
+import org.jkiss.dbeaver.model.messages.ModelMessages;
 import org.jkiss.dbeaver.model.meta.Association;
+import org.jkiss.dbeaver.model.meta.IPropertyValueListProvider;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.meta.PropertyLength;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.runtime.VoidProgressMonitor;
+import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.DBSDataContainer;
 import org.jkiss.dbeaver.model.struct.DBSEntityConstraintType;
 import org.jkiss.dbeaver.model.struct.DBSObject;
@@ -60,10 +74,16 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
     private boolean isSystem;
     private boolean isUtility;
     private String description;
+    
+    private CubridOwner owner;
+    private CubridOwner oldOwner;
+    private boolean reuseOID = true;
+    private CubridCollation collation;
     private Long rowCount;
     private List<? extends CubridTrigger> triggers;
     private final String tableCatalogName;
     private final String tableSchemaName;
+    private static final String DEFAULT_TABLE_ALIAS = "x";
 
     public CubridTableBase(
         CubridStructContainer container,
@@ -75,15 +95,38 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
         if (this.tableType == null) {
             this.tableType = "";
         }
-
+        String owner_name;
+        String collation_name;
         if (dbResult != null) {
             this.description = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, JDBCConstants.REMARKS);
+            this.reuseOID = (CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.REUSE_OID)).equals("YES") ? true : false;
+            
+            collation_name = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.COLLATION);
+            owner_name = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, CubridConstants.OWNER_NAME);
+            
+            
+        }else {
+        	owner_name = getDataSource().getContainer().getConnectionConfiguration().getUserName().toUpperCase();
+        	collation_name = CubridConstants.DEFAULT_COLLATION;
         }
+        
+        for(CubridCollation cbCollation : getDataSource().getCollations()){
+            if(cbCollation.getName().equals(collation_name)) {
+              this.collation = cbCollation;
+            }
+          }
+           
+          for(CubridOwner cbOwner : getDataSource().getOwners()){
+              if(cbOwner.getName().equals(owner_name)) {
+                this.owner = cbOwner;
+                this.oldOwner = cbOwner;
+              }
+            }
 
         final CubridMetaModel metaModel = container.getDataSource().getMetaModel();
         this.isSystem = metaModel.isSystemTable(this);
         this.isUtility = metaModel.isUtilityTable(this);
-
+        
         boolean mergeEntities = container.getDataSource().isMergeEntities();
         if (mergeEntities && dbResult != null) {
             tableCatalogName = CubridUtils.safeGetString(container.getTableCache().tableObject, dbResult, JDBCConstants.TABLE_CATALOG);
@@ -93,7 +136,7 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
             tableSchemaName = null;
         }
     }
-
+    
     @Override
     public TableCache getCache() {
         return getContainer().getTableCache();
@@ -272,13 +315,48 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
 
     @Nullable
     @Override
-    @Property(viewable = true, editableExpr = "object.dataSource.metaModel.tableCommentEditable", updatableExpr = "object.dataSource.metaModel.tableCommentEditable", length = PropertyLength.MULTILINE, order = 100)
+    @Property(viewable = true, editableExpr = "object.dataSource.metaModel.tableCommentEditable", updatableExpr = "object.dataSource.metaModel.tableCommentEditable", length = PropertyLength.MULTILINE, order = 3)
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    @Nullable
+    @Property(viewable = true, editable = true, updatable = true, listProvider = OwnerListProvider.class, order = 2)
+    public CubridOwner getOwner() {
+        return owner;
+    }
+    
+    public CubridOwner getOldOwner() {
+    	return this.oldOwner;
+    }
+
+    public void setOwner(CubridOwner owner) {
+        this.owner = owner;
+    }
+    
+    @Nullable
+    @Property(viewable = true, editable = true, updatable = true, listProvider = CollationListProvider.class, order = 9)
+    public CubridCollation getCollation() {
+        return collation;
+    }
+
+    public void setCollation(CubridCollation collation) {
+        this.collation = collation;
+    }
+    
+    @Property(viewable = true, order = 52, editable = true)
+    public boolean isReuseOID()
+    {
+        return reuseOID;
+    }
+    
+    public void setReuseOID(boolean reuseOID) 
+    {
+    	this.reuseOID = reuseOID;
     }
 
     @Override
@@ -324,6 +402,7 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
         return rowCount;
     }
 
+    
     @Nullable
     public Long getRowCountFromIndexes(DBRProgressMonitor monitor) {
         try {
@@ -528,5 +607,151 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
 
     public Collection<DBSIndexType> getTableIndexTypes() {
         return Collections.singletonList(DBSIndexType.OTHER);
+    }
+    
+    public static class CollationListProvider implements IPropertyValueListProvider<CubridTableBase> {
+        @Override
+        public boolean allowCustomValue()
+        {
+            return false;
+        }
+        @Override
+        public Object[] getPossibleValues(CubridTableBase object)
+        {
+        	return object.getDataSource().getCollations().toArray();
+        }
+    }
+    
+    public static class OwnerListProvider implements IPropertyValueListProvider<CubridTableBase> {
+        @Override
+        public boolean allowCustomValue()
+        {
+            return false;
+        }
+        @Override
+        public Object[] getPossibleValues(CubridTableBase object)
+        {
+        	return object.getDataSource().getOwners().toArray();
+        }
+    }
+    
+    /**
+     * Reads and caches metadata which is required for data requests
+     * @param monitor progress monitor
+     * @throws DBCException on error
+     */
+    private void readRequiredMeta(DBRProgressMonitor monitor)
+        throws DBCException
+    {
+        try {
+            getAttributes(monitor);
+        }
+        catch (DBException e) {
+            throw new DBCException("Can't cache table columns", e);
+        }
+    }
+    
+    
+    @NotNull
+    @Override
+    public DBCStatistics readData(@NotNull DBCExecutionSource source, @NotNull DBCSession session, @NotNull DBDDataReceiver dataReceiver, @Nullable DBDDataFilter dataFilter, long firstRow, long maxRows, long flags, int fetchSize)
+        throws DBCException
+    {
+        DBCStatistics statistics = new DBCStatistics();
+        boolean hasLimits = firstRow >= 0 && maxRows > 0;
+
+        DBPDataSource dataSource = session.getDataSource();
+        DBRProgressMonitor monitor = session.getProgressMonitor();
+        try {
+            readRequiredMeta(monitor);
+        } catch (DBException e) {
+            log.warn(e);
+        }
+
+        DBDPseudoAttribute rowIdAttribute = (flags & FLAG_READ_PSEUDO) != 0 ?
+            DBUtils.getRowIdAttribute(this) : null;
+
+        // Always use alias if we have data filter or ROWID.
+        // Some criteria doesn't work without alias
+        // (e.g. structured attributes in Oracle or composite types in PostgreSQL requires table alias)
+        String tableAlias = null;
+        if ((dataFilter != null || rowIdAttribute != null) && dataSource.getSQLDialect().supportsAliasInSelect()) {
+            tableAlias = DEFAULT_TABLE_ALIAS;
+        }
+
+        if (rowIdAttribute != null && tableAlias == null) {
+            log.warn("Can't query ROWID - table alias not supported");
+            rowIdAttribute = null;
+        }
+
+        StringBuilder query = new StringBuilder(100);
+        query.append("SELECT ");
+        appendSelectSource(monitor, query, tableAlias, rowIdAttribute);
+        query.append(" FROM ").append(this.owner.getName() + "." + getFullyQualifiedName(DBPEvaluationContext.DML));
+        if (tableAlias != null) {
+            query.append(" ").append(tableAlias); //$NON-NLS-1$
+        }
+        SQLUtils.appendQueryConditions(dataSource, query, tableAlias, dataFilter);
+        SQLUtils.appendQueryOrder(dataSource, query, tableAlias, dataFilter);
+
+        String sqlQuery = query.toString();
+        statistics.setQueryText(sqlQuery);
+
+        monitor.subTask(ModelMessages.model_jdbc_fetch_table_data);
+
+        try (DBCStatement dbStat = DBUtils.makeStatement(
+            source,
+            session,
+            DBCStatementType.SCRIPT,
+            sqlQuery,
+            firstRow,
+            maxRows))
+        {
+            if (monitor.isCanceled()) {
+                return statistics;
+            }
+            if (dbStat instanceof JDBCStatement && (fetchSize > 0 || maxRows > 0)) {
+                DBExecUtils.setStatementFetchSize(dbStat, firstRow, maxRows, fetchSize);
+            }
+
+            long startTime = System.currentTimeMillis();
+            boolean executeResult = dbStat.executeStatement();
+            statistics.setExecuteTime(System.currentTimeMillis() - startTime);
+            if (executeResult) {
+                DBCResultSet dbResult = dbStat.openResultSet();
+                if (dbResult != null && !monitor.isCanceled()) {
+                    try {
+                        dataReceiver.fetchStart(session, dbResult, firstRow, maxRows);
+
+                        DBFetchProgress fetchProgress = new DBFetchProgress(session.getProgressMonitor());
+                        while (dbResult.nextRow()) {
+                            if (fetchProgress.isCanceled() || (hasLimits && fetchProgress.isMaxRowsFetched(maxRows))) {
+                                // Fetch not more than max rows
+                                break;
+                            }
+                            dataReceiver.fetchRow(session, dbResult);
+                            fetchProgress.monitorRowFetch();
+                        }
+                        fetchProgress.dumpStatistics(statistics);
+                    } finally {
+                        // First - close cursor
+                        try {
+                            dbResult.close();
+                        } catch (Throwable e) {
+                            log.error("Error closing result set", e); //$NON-NLS-1$
+                        }
+                        // Then - signal that fetch was ended
+                        try {
+                            dataReceiver.fetchEnd(session, dbResult);
+                        } catch (Throwable e) {
+                            log.error("Error while finishing result set fetch", e); //$NON-NLS-1$
+                        }
+                    }
+                }
+            }
+            return statistics;
+        } finally {
+            dataReceiver.close();
+        }
     }
 }
