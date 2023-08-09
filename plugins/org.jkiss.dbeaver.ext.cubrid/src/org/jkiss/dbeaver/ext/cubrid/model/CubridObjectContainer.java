@@ -390,9 +390,6 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
 
     @Override
     public List<? extends CubridProcedure> getProceduresOnly(DBRProgressMonitor monitor) throws DBException {
-        if (!dataSource.splitProceduresAndFunctions()) {
-            return getProcedures(monitor);
-        }
         List<CubridProcedure> filteredProcedures = new ArrayList<>();
         for (CubridProcedure proc : CommonUtils.safeList(getProcedures(monitor))) {
             if (proc.getProcedureType() == DBSProcedureType.PROCEDURE) {

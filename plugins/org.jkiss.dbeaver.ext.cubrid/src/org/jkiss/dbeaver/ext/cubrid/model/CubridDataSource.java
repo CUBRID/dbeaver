@@ -33,6 +33,7 @@ import org.jkiss.dbeaver.model.connection.DBPDriver;
 import org.jkiss.dbeaver.model.data.DBDValueHandlerProvider;
 import org.jkiss.dbeaver.model.exec.*;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCDatabaseMetaData;
+import org.jkiss.dbeaver.model.exec.jdbc.JDBCPreparedStatement;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCResultSet;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCSession;
 import org.jkiss.dbeaver.model.exec.jdbc.JDBCStatement;
@@ -71,6 +72,9 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     private final CubridMetaModel metaModel;
     private CubridObjectContainer structureContainer;
     boolean catalogsFiltered;
+    private ArrayList<CubridOwner> owners;
+    private ArrayList<CubridCollation> collations;
+    private ArrayList<CubridColumnTypeName> columnTypeNames;
 
     private String queryGetActiveDB;
     private String querySetActiveDB;
@@ -216,6 +220,18 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
         }
     }
 
+    public Collection<CubridOwner> getOwners() {
+    	return owners;
+    }
+    
+    public Collection<CubridCollation> getCollations() {
+    	return collations;
+    }
+    
+    public Collection<CubridColumnTypeName> getColumnTypeNames() {
+    	return columnTypeNames;
+    }
+    
     public String getAllObjectsPattern() {
         return allObjectsPattern;
     }
@@ -581,6 +597,32 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
             }
             throw new DBException("Error reading metadata", ex, this);
         }
+        
+        collations = new ArrayList<CubridCollation>();
+        for (String name: CubridConstants.COLLATIONS) {
+        	CubridCollation collation = new CubridCollation(this, name);
+        	collations.add(collation);
+        }
+        
+        columnTypeNames = new ArrayList<CubridColumnTypeName>();
+        for (String name: CubridConstants.DATA_TYPES) {
+        	CubridColumnTypeName dataType = new CubridColumnTypeName(this, name);
+        	columnTypeNames.add(dataType);
+        }
+        
+	    owners = new ArrayList<CubridOwner>();
+	    try (JDBCSession session = DBUtils.openMetaSession(monitor, structureContainer, allObjectsPattern)) {
+		    String sql = CubridConstants.OWNER_QUERY;
+			JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+			ResultSet rs = dbStat.executeQuery();
+			while(rs.next()) {
+				CubridOwner owner = new CubridOwner(this, rs.getString("name"));
+	        	owners.add(owner);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     public List<String> getCatalogsNames(@NotNull DBRProgressMonitor monitor, @NotNull JDBCDatabaseMetaData metaData, CubridMetaObject catalogObject, @Nullable DBSObjectFilter catalogFilters) throws DBException {

@@ -322,151 +322,45 @@ public class CubridMetaModel {
         CubridDataSource dataSource = container.getDataSource();
         CubridMetaObject procObject = dataSource.getMetaObject(CubridConstants.OBJECT_PROCEDURE);
         try (JDBCSession session = DBUtils.openMetaSession(monitor, container, "Load procedures")) {
-            boolean supportsFunctions = false;
-            if (hasFunctionSupport()) {
-                try {
-                    // Try to read functions (note: this function appeared only in Java 1.6 so it maybe not implemented by many drivers)
-                    // Read procedures
-                    JDBCResultSet dbResult = session.getMetaData().getFunctions(
-                            container.getCatalog() == null ? null : container.getCatalog().getName(),
-                            container.getSchema() == null || DBUtils.isVirtualObject(container.getSchema()) ? null : JDBCUtils.escapeWildCards(session, container.getSchema().getName()),
-                            dataSource.getAllObjectsPattern());
-                    try {
-                        supportsFunctions = true;
-                        while (dbResult.next()) {
-                            if (monitor.isCanceled()) {
-                                break;
-                            }
-                            String functionName = CubridUtils.safeGetStringTrimmed(procObject, dbResult, JDBCConstants.FUNCTION_NAME);
-                            if (functionName == null) {
-                                //functionName = CubridUtils.safeGetStringTrimmed(procObject, dbResult, JDBCConstants.PROCEDURE_NAME);
-                                // Apparently some drivers return the same results for getProcedures and getFunctions -
-                                // so let's skip yet another procedure list
-                                continue;
-                            }
-                            String specificName = CubridUtils.safeGetStringTrimmed(procObject, dbResult, JDBCConstants.SPECIFIC_NAME);
-                            if (specificName == null && functionName.indexOf(';') != -1) {
-                                // [JDBC: SQL Server native driver]
-                                specificName = functionName;
-                                functionName = functionName.substring(0, functionName.lastIndexOf(';'));
-                            }
-                            if (container.hasProcedure(functionName)) {
-                                // Seems to be a duplicate
-                                continue;
-                            }
-                            int funcTypeNum = CubridUtils.safeGetInt(procObject, dbResult, JDBCConstants.FUNCTION_TYPE);
-                            String remarks = CubridUtils.safeGetString(procObject, dbResult, JDBCConstants.REMARKS);
-                            CubridFunctionResultType functionResultType;
-                            switch (funcTypeNum) {
-                                //case DatabaseMetaData.functionResultUnknown: functionResultType = CubridFunctionResultType.UNKNOWN; break;
-                                case DatabaseMetaData.functionNoTable:
-                                    functionResultType = CubridFunctionResultType.NO_TABLE;
-                                    break;
-                                case DatabaseMetaData.functionReturnsTable:
-                                    functionResultType = CubridFunctionResultType.TABLE;
-                                    break;
-                                default:
-                                    functionResultType = CubridFunctionResultType.UNKNOWN;
-                                    break;
-                            }
-
-                            final CubridProcedure procedure = createProcedureImpl(
-                                    container,
-                                    functionName,
-                                    specificName,
-                                    remarks,
-                                    DBSProcedureType.FUNCTION,
-                                    functionResultType);
-                            container.addProcedure(procedure);
-
-                            funcMap.put(specificName == null ? functionName : specificName, procedure);
-                        }
-                    } finally {
-                        dbResult.close();
-                    }
-                } catch (Throwable e) {
-                    log.debug("Can't read cubrid functions", e);
+        	
+        	
+        	
+        	JDBCStatement dbState = prepareProcedureFunctionLoadStatement(session);
+        	dbState.executeStatement();
+        	JDBCResultSet dbResult = dbState.getResultSet();
+        	
+        	while(dbResult.next()) {
+        		
+        		if (monitor.isCanceled()) {
+                    break;
                 }
-            }
-
-            if (hasProcedureSupport()) {
-                {
-                    // Read procedures
-                    JDBCResultSet dbResult = session.getMetaData().getProcedures(
-                            container.getCatalog() == null ? null : container.getCatalog().getName(),
-                            container.getSchema() == null || DBUtils.isVirtualObject(container.getSchema()) ? null : JDBCUtils.escapeWildCards(session, container.getSchema().getName()),
-                            dataSource.getAllObjectsPattern());
-                    try {
-                        while (dbResult.next()) {
-                            if (monitor.isCanceled()) {
-                                break;
-                            }
-                            String procedureCatalog = CubridUtils.safeGetStringTrimmed(procObject, dbResult, JDBCConstants.PROCEDURE_CAT);
-                            String procedureName = CubridUtils.safeGetStringTrimmed(procObject, dbResult, JDBCConstants.PROCEDURE_NAME);
-                            String specificName = CubridUtils.safeGetStringTrimmed(procObject, dbResult, JDBCConstants.SPECIFIC_NAME);
-                            int procTypeNum = CubridUtils.safeGetInt(procObject, dbResult, JDBCConstants.PROCEDURE_TYPE);
-                            String remarks = CubridUtils.safeGetString(procObject, dbResult, JDBCConstants.REMARKS);
-                            DBSProcedureType procedureType;
-                            switch (procTypeNum) {
-                                case DatabaseMetaData.procedureNoResult:
-                                    procedureType = DBSProcedureType.PROCEDURE;
-                                    break;
-                                case DatabaseMetaData.procedureReturnsResult:
-                                    procedureType = supportsFunctions ? DBSProcedureType.PROCEDURE : DBSProcedureType.FUNCTION;
-                                    break;
-                                case DatabaseMetaData.procedureResultUnknown:
-                                    procedureType = DBSProcedureType.PROCEDURE;
-                                    break;
-                                default:
-                                    procedureType = DBSProcedureType.UNKNOWN;
-                                    break;
-                            }
-                            if (CommonUtils.isEmpty(specificName)) {
-                                specificName = procedureName;
-                            }
-                            CubridProcedure function = funcMap.get(specificName);
-                            if (function != null && !supportsEqualFunctionsAndProceduresNames()) {
-                                // Broken driver
-                                log.debug("Broken driver [" + session.getDataSource().getContainer().getDriver().getName() + "] - returns the same list for getProcedures and getFunctons");
-                                break;
-                            }
-                            procedureName = CubridUtils.normalizeProcedureName(procedureName);
-
-                            CubridPackage procedurePackage = null;
-                            // FIXME: remove as a silly workaround
-                            String packageName = getPackageName(dataSource, procedureCatalog, procedureName, specificName);
-                            if (packageName != null) {
-                                if (!CommonUtils.isEmpty(packageName)) {
-                                    if (packageMap == null) {
-                                        packageMap = new TreeMap<>();
-                                    }
-                                    procedurePackage = packageMap.get(packageName);
-                                    if (procedurePackage == null) {
-                                        procedurePackage = new CubridPackage(container, packageName, true);
-                                        packageMap.put(packageName, procedurePackage);
-                                        container.addPackage(procedurePackage);
-                                    }
-                                }
-                            }
-
-                            final CubridProcedure procedure = createProcedureImpl(
-                                    procedurePackage != null ? procedurePackage : container,
-                                    procedureName,
-                                    specificName,
-                                    remarks,
-                                    procedureType,
-                                    null);
-                            if (procedurePackage != null) {
-                                procedurePackage.addProcedure(procedure);
-                            } else {
-                                container.addProcedure(procedure);
-                            }
-                        }
-                    } finally {
-                        dbResult.close();
-                    }
-                }
-            }
+        		
+        		String functionName = CubridUtils.safeGetStringTrimmed(procObject, dbResult, JDBCConstants.PROCEDURE_NAME);
+        		String remarks = CubridUtils.safeGetString(procObject, dbResult, JDBCConstants.REMARKS);
+        		String type = CubridUtils.safeGetStringTrimmed(procObject, dbResult, JDBCConstants.PROCEDURE_TYPE);
+        		String returnType = CubridUtils.safeGetStringTrimmed(procObject, dbResult, CubridConstants.RETURN_TYPE);
+        		DBSProcedureType procedureType;
+        		if(type.equalsIgnoreCase(CubridConstants.TERM_PROCEDURE)) {
+        			procedureType = DBSProcedureType.PROCEDURE;
+        			
+        		}else if(type.equalsIgnoreCase(CubridConstants.TERM_FUNCTION)) {
+        			procedureType = DBSProcedureType.FUNCTION;
+        			
+        		}else {
+        			procedureType = DBSProcedureType.UNKNOWN;
+        		}
+        		
+        		final CubridProcedure procedure = createProcedureImpl(
+                        container,
+                        functionName,
+                        null,
+                        remarks,
+                        procedureType,
+                        returnType);
+                container.addProcedure(procedure);
+        		
+        	}
+        	
 
         } catch (SQLException e) {
             throw new DBException(e, dataSource);
@@ -489,7 +383,7 @@ public class CubridMetaModel {
         String specificName,
         String remarks,
         DBSProcedureType procedureType,
-        CubridFunctionResultType functionResultType)
+        String functionResultType)
     {
         return new CubridProcedure(
             container,
@@ -497,7 +391,7 @@ public class CubridMetaModel {
             specificName,
             remarks,
             procedureType,
-            functionResultType);
+           functionResultType);
     }
 
     public String getProcedureDDL(DBRProgressMonitor monitor, CubridProcedure sourceObject) throws DBException {
@@ -568,35 +462,22 @@ public class CubridMetaModel {
     public JDBCStatement prepareTableLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @Nullable CubridTableBase object, @Nullable String objectName)
         throws SQLException
     {
-        String tableNamePattern;
-        if (object == null && objectName == null) {
-            final DBSObjectFilter tableFilters = session.getDataSource().getContainer().getObjectFilter(CubridTable.class, owner, false);
+  	
+    	   String sql= "select *, class_name as TABLE_NAME, \r\n"
+    	   		+ "case when class_type = 'CLASS' then 'TABLE'\r\n"
+    	   		+ "when class_type = 'VCLASS' then 'VIEW' end as TABLE_TYPE, comment as REMARKS from db_class \r\n"
+    	   		+ "where is_system_class='NO'";
+           final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
 
-            if (tableFilters != null && tableFilters.hasSingleMask()) {
-                tableNamePattern = tableFilters.getSingleMask();
-                if (!CommonUtils.isEmpty(tableNamePattern)) {
-                    tableNamePattern = SQLUtils.makeSQLLike(tableNamePattern);
-                }
-            } else {
-                tableNamePattern = owner.getDataSource().getAllObjectsPattern();
-            }
-        } else {
-            tableNamePattern = JDBCUtils.escapeWildCards(session, (object != null ? object.getName() : objectName));
-        }
-
-        return session.getMetaData().getTables(
-            owner.getCatalog() == null ? null : owner.getCatalog().getName(),
-            owner.getSchema() == null || DBUtils.isVirtualObject(owner.getSchema()) ? null : JDBCUtils.escapeWildCards(session, owner.getSchema().getName()),
-            tableNamePattern,
-            null).getSourceStatement();
+           return dbStat;
     }
     
     public JDBCStatement prepareSystemTableLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer owner, @Nullable CubridTableBase object, @Nullable String objectName)
             throws SQLException
         {
-           String sql= "select *, class_name as TABLE_NAME from db_class\r\n"
-           		+ "where \r\n"
-           		+ "class_type='CLASS' \r\n"
+           String sql= "select *, class_name as TABLE_NAME, case when class_type = 'CLASS' \r\n"
+        		+ "then 'TABLE' end as TABLE_TYPE from db_class\r\n"
+           		+ "where class_type='CLASS' \r\n"
            		+ "and is_system_class='YES'";
            final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
 
@@ -623,6 +504,17 @@ public class CubridMetaModel {
            JDBCPreparedStatement dbStat = session.prepareStatement(sql);
            return dbStat;
         }
+    
+    
+    public JDBCStatement prepareProcedureFunctionLoadStatement(@NotNull JDBCSession session)
+            throws SQLException
+        {
+           String sql= "SELECT * ,sp_name as PROCEDURE_NAME, sp_type as PROCEDURE_TYPE, comment as REMARKS  FROM db_stored_procedure;";
+           final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+
+           return dbStat;
+        }
+    
     
     /**
      * Some drivers return columns, tables or other objects names with extra spaces around (like FireBird)
@@ -749,13 +641,14 @@ public class CubridMetaModel {
             .getSourceStatement();
     }
 
-    public CubridTableColumn createTableColumnImpl(@NotNull DBRProgressMonitor monitor, @Nullable JDBCResultSet dbResult, @NotNull CubridTableBase table, String columnName, String typeName, int valueType, int sourceType, int ordinalPos, long columnSize, long charLength, Integer scale, Integer precision, int radix, boolean notNull, String remarks, String defaultValue, boolean autoIncrement, boolean autoGenerated) throws DBException {
+    public CubridTableColumn createTableColumnImpl(@NotNull DBRProgressMonitor monitor, @Nullable JDBCResultSet dbResult, @NotNull CubridTableBase table, String columnName, String typeName, int valueType, int sourceType, int ordinalPos, long columnSize, long charLength, Integer scale, Integer precision, int radix, boolean notNull, String remarks, String defaultValue, boolean autoIncrement, boolean autoGenerated, boolean unique, String collation_name, Integer initialValue, Integer incrementValue, boolean shared) throws DBException {
         return new CubridTableColumn(table,
             columnName,
             typeName, valueType, sourceType, ordinalPos,
             columnSize,
             charLength, scale, precision, radix, notNull,
-            remarks, defaultValue, autoIncrement, autoGenerated
+            remarks, defaultValue, autoIncrement, autoGenerated,
+            unique, collation_name, initialValue, incrementValue, shared
         );
     }
 
@@ -943,11 +836,11 @@ public class CubridMetaModel {
     // Comments
 
     public boolean isTableCommentEditable() {
-        return false;
+        return true;
     }
 
     public boolean isTableColumnCommentEditable() {
-        return false;
+        return true;
     }
 
     public boolean supportsNotNullColumnModifiers(DBSObject object) {
@@ -955,7 +848,7 @@ public class CubridMetaModel {
     }
 
     public boolean isColumnNotNullByDefault() {
-        return false;
+        return true;
     }
 
     public boolean hasProcedureSupport() {
