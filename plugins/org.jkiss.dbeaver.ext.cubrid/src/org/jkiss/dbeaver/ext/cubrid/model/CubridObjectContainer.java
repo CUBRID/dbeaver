@@ -20,6 +20,8 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPRefreshableObject;
 import org.jkiss.dbeaver.model.DBUtils;
@@ -54,7 +56,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     private final IndexCache indexCache;
     private final ForeignKeysCache foreignKeysCache;
     private final ConstraintKeysCache constraintKeysCache;
-    private final ContainerTriggerCache containerTriggerCache;
+    private final TriggerCache triggerCache;
     private final TableTriggerCache tableTriggerCache;
     private final CubridSequenceCache sequenceCache;
     private final CubridSynonymCache synonymCache;
@@ -71,7 +73,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         this.foreignKeysCache = new ForeignKeysCache(tableCache);
         this.systemTableCache = createSystemTableCache(dataSource);
         this.systemViewCache = createSystemViewCache(dataSource);
-        this.containerTriggerCache = new ContainerTriggerCache();
+        this.triggerCache = new TriggerCache(dataSource);
         this.tableTriggerCache = new TableTriggerCache(tableCache);
         this.sequenceCache = new CubridSequenceCache();
         this.synonymCache = new CubridSynonymCache();
@@ -428,12 +430,12 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
 
     @Override
     public Collection<? extends CubridTrigger> getTriggers(DBRProgressMonitor monitor) throws DBException {
-        return getDataSource().getMetaModel().supportsDatabaseTriggers(getDataSource()) ? containerTriggerCache.getAllObjects(monitor, this) : Collections.emptyList();
+        return triggerCache.getAllObjects(monitor, this);
     }
 
     @Override
     public Collection<? extends CubridTrigger> getTableTriggers(DBRProgressMonitor monitor) throws DBException {
-        return getDataSource().getMetaModel().supportsTriggers(getDataSource()) ? tableTriggerCache.getAllObjects(monitor, this) : Collections.emptyList();
+        return tableTriggerCache.getAllObjects(monitor, this);
     }
 
     @Association
@@ -465,7 +467,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         this.indexCache.clearCache();
         this.constraintKeysCache.clearCache();
         this.foreignKeysCache.clearCache();
-        this.containerTriggerCache.clearCache();
+        this.triggerCache.clearCache();
         this.tableTriggerCache.clearCache();
         this.sequenceCache.clearCache();
         this.synonymCache.clearCache();
@@ -552,18 +554,25 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     }
 
 
-    public class ContainerTriggerCache extends JDBCObjectCache<CubridStructContainer, CubridTrigger> {
+    public class TriggerCache extends JDBCObjectCache<CubridStructContainer, CubridTrigger> {
 
+    	final CubridMetaObject triggerObject;
+    	
+    	protected TriggerCache(CubridDataSource dataSource)
+        {
+            this.triggerObject = dataSource.getMetaObject(CubridConstants.OBJECT_TRIGGER);
+        }
+    	
         @NotNull
         @Override
         protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer container) throws SQLException {
-            return container.getDataSource().getMetaModel().prepareContainerTriggersLoadStatement(session, container);
+            return container.getDataSource().getMetaModel().prepareTriggersLoadStatement(session, container);
         }
 
         @Nullable
         @Override
         protected CubridTrigger fetchObject(@NotNull JDBCSession session, @NotNull CubridStructContainer container, @NotNull JDBCResultSet resultSet) throws SQLException, DBException {
-            return container.getDataSource().getMetaModel().createContainerTriggerImpl(container, resultSet);
+            return container.getDataSource().getMetaModel().createTriggerImpl(session, container, triggerObject, resultSet);
         }
     }
 

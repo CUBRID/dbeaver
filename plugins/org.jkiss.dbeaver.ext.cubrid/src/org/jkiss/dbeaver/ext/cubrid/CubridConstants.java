@@ -98,6 +98,7 @@ public class CubridConstants {
     public static final String OBJECT_TABLE_TYPE = "table-type";
     public static final String OBJECT_TABLE = "table";
     public static final String OBJECT_TABLE_COLUMN = "table-column";
+    public static final String OBJECT_TRIGGER = "trigger";
     public static final String OBJECT_FOREIGN_KEY = "foreign-key";
     public static final String OBJECT_PRIMARY_KEY = "primary-key";
     public static final String OBJECT_INDEX = "index";
@@ -123,4 +124,17 @@ public class CubridConstants {
     public static final String[] DATA_TYPES = {"BIGINT", "BIT", "BIT VARYING", "BLOB", "CHAR", "CLOB", "DATE", 
     		"DATETIME", "DOUBLE", "ENUM", "FLOAT", "INTEGER", "MONETARY", "MULTISET", "NCHAR", "NCHAR VARYING", 
     		"NUMERIC", "SEQUENCE", "SET", "SMALLINT", "STRING", "TIME", "TIMESTAMP", "VARCHAR"};
+    
+    public static final String NAME = "name";
+    public static final String TARGET_OWNER_NAME = "target_owner_name";
+    public static final String TARGET_CLASS_NAME = "target_class_name";
+    public static final String PRIORITY = "priority";
+    public static final String EVENT = "event";
+    public static final String CONDITION_TIME = "condition_time";
+    public static final String CONDITION = "condition";
+    public static final String ACTION_TIME = "action_time";
+    public static final String ACTION_TYPE = "action_type";
+    public static final String ACTION_DEFINITION = "action_definition";
+    public static final String COMMENT = "comment";
+
 }
