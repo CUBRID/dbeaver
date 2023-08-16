@@ -20,6 +20,8 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPRefreshableObject;
 import org.jkiss.dbeaver.model.DBUtils;
@@ -73,7 +75,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         this.systemViewCache = createSystemViewCache(dataSource);
         this.containerTriggerCache = new ContainerTriggerCache();
         this.tableTriggerCache = new TableTriggerCache(tableCache);
-        this.sequenceCache = new CubridSequenceCache();
+        this.sequenceCache = new CubridSequenceCache(dataSource);
         this.synonymCache = new CubridSynonymCache();
     }
 
@@ -569,6 +571,13 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
 
     class CubridSequenceCache extends JDBCObjectCache<CubridObjectContainer, CubridSequence> {
 
+    	final CubridMetaObject sequenceObject;
+    	
+    	protected CubridSequenceCache(CubridDataSource dataSource)
+        {
+            this.sequenceObject = dataSource.getMetaObject(CubridConstants.OBJECT_SEQUENCE);
+        }
+    	
         @NotNull
         @Override
         protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session, @NotNull CubridObjectContainer container) throws SQLException {
@@ -578,7 +587,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         @Nullable
         @Override
         protected CubridSequence fetchObject(@NotNull JDBCSession session, @NotNull CubridObjectContainer container, @NotNull JDBCResultSet resultSet) throws SQLException, DBException {
-            return container.getDataSource().getMetaModel().createSequenceImpl(session, container, resultSet);
+            return container.getDataSource().getMetaModel().createSequenceImpl(session, container, sequenceObject, resultSet);
         }
 
         @Override

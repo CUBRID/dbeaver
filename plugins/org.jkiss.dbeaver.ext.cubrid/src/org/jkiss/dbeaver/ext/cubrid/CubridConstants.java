@@ -111,6 +111,16 @@ public class CubridConstants {
 
     public static final String BASE_CONSTRAINT_NAME = "new_key";
     
+    public static final String OBJECT_SEQUENCE = "sequence";
+    public static final String SEQUENCE_NAME = "name";
+    public static final String COMMENT = "comment";
+    public static final String CURRENT_VALUE = "current_val";
+    public static final String MIN_VAL = "min_val";
+    public static final String MAX_VAL = "max_val";
+    public static final String INCREMENT_VAL = "increment_val";
+    public static final String CYCLIC = "cyclic";
+    public static final String CACHED_NUM = "cached_num";
+
     public static final String[] COLLATIONS = {"iso88591_bin", "utf8_bin", "iso88591_en_cs", "iso88591_en_ci", 
     		"utf8_en_cs", "utf8_en_ci", "utf8_tr_cs", "utf8_ko_cs", "euckr_bin", "binary"};
     public static final String OWNER_QUERY = "select name from db_user";
