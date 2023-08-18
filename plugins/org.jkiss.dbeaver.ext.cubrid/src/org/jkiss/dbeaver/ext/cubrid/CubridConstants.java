@@ -145,6 +145,5 @@ public class CubridConstants {
     public static final String ACTION_TIME = "action_time";
     public static final String ACTION_TYPE = "action_type";
     public static final String ACTION_DEFINITION = "action_definition";
-    public static final String COMMENT = "comment";
 
 }
