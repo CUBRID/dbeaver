@@ -16,8 +16,12 @@
  */
 package org.jkiss.dbeaver.ext.cubrid.model;
 
+import java.sql.ResultSet;
+
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPNamedObject2;
 import org.jkiss.dbeaver.model.DBPQualifiedObject;
@@ -39,15 +43,19 @@ public class CubridSequence implements DBSSequence, DBPQualifiedObject, DBPNamed
     private Number minValue;
     private Number maxValue;
     private Number incrementBy;
+    private int cyclic;
+    private int cachedNum;
 
-    public CubridSequence(CubridStructContainer container, String name, String description, Number lastValue, Number minValue, Number maxValue, Number incrementBy) {
+    public CubridSequence(CubridStructContainer container, CubridMetaObject sequenceObject, ResultSet dbResult) {
         this.container = container;
-        this.name = name;
-        this.description = description;
-        this.lastValue = lastValue;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this.incrementBy = incrementBy;
+        this.name = CubridUtils.safeGetStringTrimmed(sequenceObject, dbResult, CubridConstants.SEQUENCE_NAME);;
+        this.description = CubridUtils.safeGetString(sequenceObject, dbResult, CubridConstants.COMMENT);
+        this.lastValue = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.CURRENT_VALUE);
+        this.minValue = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.MIN_VAL);
+        this.maxValue = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.MAX_VAL);
+        this.incrementBy = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.INCREMENT_VAL);
+        this.cyclic = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.CYCLIC);
+        this.cachedNum = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.CACHED_NUM);
     }
 
     @NotNull
@@ -133,5 +141,15 @@ public class CubridSequence implements DBSSequence, DBPQualifiedObject, DBPNamed
 
     public void setIncrementBy(Number incrementBy) {
         this.incrementBy = incrementBy;
+    }
+    
+    @Property(viewable = true, order = 6)
+    public Number getCyclic() {
+        return cyclic;
+    }
+
+    @Property(viewable = true, order = 7)
+    public Number getCachedNum() {
+        return cachedNum;
     }
 }

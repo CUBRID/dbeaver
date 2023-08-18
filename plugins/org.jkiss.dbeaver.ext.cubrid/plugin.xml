@@ -127,17 +127,17 @@
                                 </items>
                             </items>
                         </folder>
-                        <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridProcedure" label="%tree.procedures_function.node.name" icon="#procedures" description="%tree.procedures_function.node.name" visibleIf="object.dataSource.info.supportsStoredCode()">
+                        <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridProcedure" label="%tree.procedures_function.node.name" icon="#procedures" description="%tree.procedures_function.node.name" visibleIf="object.dataSource.info.supportsStoredCode()">   
                             <folder label="%tree.procedures.node.name" icon="#procedures" description="Procedures">
                                 <items label="%tree.procedures.node.name" path="column" property="proceduresOnly">
                                 </items>
-                            </folder>              
+                            </folder>       
                             <folder label="%tree.function.node.name" icon="#procedures" description="Function">
-                                <items label="%tree.functions.node.name" path="function" property="functionsOnly" icon="#function">                                
-                        		</items>
-                            </folder>                       
-                        </folder>      
-                        <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridSequence" label="%tree.sequences.node.name" icon="#sequences" description="%tree.sequences.node.tip" visibleIf="object.dataSource.metaModel.supportsSequences(object.dataSource)">
+                                <items label="%tree.functions.node.name" path="function" property="functionsOnly" icon="#function">          
+                            </items>
+                            </folder>            
+                        </folder>
+                        <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridSequence" label="%tree.sequences.node.name" icon="#sequences" description="%tree.sequences.node.tip">
                             <items label="%tree.sequence.node.name" path="sequence" property="sequences" icon="#sequence"/>
                         </folder>
                         <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridSynonym" label="%tree.synonyms.node.name" icon="#synonyms" description="Synonyms" visibleIf="object.dataSource.metaModel.supportsSynonyms(object.dataSource)">
