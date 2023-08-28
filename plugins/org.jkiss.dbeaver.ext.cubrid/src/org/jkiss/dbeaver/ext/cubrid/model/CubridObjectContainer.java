@@ -60,6 +60,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     private final TableTriggerCache tableTriggerCache;
     private final CubridSequenceCache sequenceCache;
     private final CubridSynonymCache synonymCache;
+    private final CubridUserCache cubridUserCache;
     private List<CubridPackage> packages;
     protected List<CubridProcedure> procedures;
     protected List<? extends CubridSequence> sequences;
@@ -77,6 +78,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         this.tableTriggerCache = new TableTriggerCache(tableCache);
         this.sequenceCache = new CubridSequenceCache(dataSource);
         this.synonymCache = new CubridSynonymCache();
+		this.cubridUserCache = new CubridUserCache();
     }
 
     public TableCache createTableCache(CubridDataSource dataSource) {
@@ -411,6 +413,11 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     }
 
     @Override
+    public Collection<? extends CubridUser> getCubridUsers(DBRProgressMonitor monitor) throws DBException {
+    	return cubridUserCache.getAllObjects(monitor, this);
+    }
+    
+    @Override
     public Collection<? extends CubridSequence> getSequences(DBRProgressMonitor monitor) throws DBException {
         return sequenceCache.getAllObjects(monitor, this);
     }
@@ -609,6 +616,24 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         protected CubridSynonym fetchObject(@NotNull JDBCSession session, @NotNull CubridObjectContainer container, @NotNull JDBCResultSet resultSet) throws SQLException, DBException {
             return container.getDataSource().getMetaModel().createSynonymImpl(session, container, resultSet);
         }
+    }
+    
+    class CubridUserCache extends JDBCObjectCache<CubridObjectContainer, CubridUser> {
+
+        @NotNull
+        @Override
+        protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session, @NotNull CubridObjectContainer container) throws SQLException {
+            return container.getDataSource().getMetaModel().prepareCubridUserLoadStatement(session, container);
+        }
+
+        @Nullable
+        @Override
+        protected CubridUser fetchObject(@NotNull JDBCSession session, @NotNull CubridObjectContainer container, @NotNull JDBCResultSet resultSet) throws SQLException, DBException {
+        	String name = resultSet.getString("name");
+        	String comment = resultSet.getString("comment");
+            return container.getDataSource().getMetaModel().createCubridUserImpl(container, name, comment);
+        }
+
     }
 
 }

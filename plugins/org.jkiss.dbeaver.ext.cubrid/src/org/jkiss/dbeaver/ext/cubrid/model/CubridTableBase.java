@@ -75,8 +75,8 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
     private boolean isUtility;
     private String description;
     
-    private CubridOwner owner;
-    private CubridOwner oldOwner;
+    private CubridUser owner;
+    private CubridUser oldOwner;
     private boolean reuseOID = true;
     private CubridCollation collation;
     private Long rowCount;
@@ -116,7 +116,7 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
             }
           }
            
-          for(CubridOwner cbOwner : getDataSource().getOwners()){
+          for(CubridUser cbOwner : getDataSource().getOwners()){
               if(cbOwner.getName().equals(owner_name)) {
                 this.owner = cbOwner;
                 this.oldOwner = cbOwner;
@@ -326,15 +326,15 @@ public abstract class CubridTableBase extends JDBCTable<CubridDataSource, Cubrid
     
     @Nullable
     @Property(viewable = true, editable = true, updatable = true, listProvider = OwnerListProvider.class, order = 2)
-    public CubridOwner getOwner() {
+    public CubridUser getOwner() {
         return owner;
     }
     
-    public CubridOwner getOldOwner() {
+    public CubridUser getOldOwner() {
     	return this.oldOwner;
     }
 
-    public void setOwner(CubridOwner owner) {
+    public void setOwner(CubridUser owner) {
         this.owner = owner;
     }
     

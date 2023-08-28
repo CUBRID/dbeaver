@@ -72,7 +72,7 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     private final CubridMetaModel metaModel;
     private CubridObjectContainer structureContainer;
     boolean catalogsFiltered;
-    private ArrayList<CubridOwner> owners;
+    private ArrayList<CubridUser> owners;
     private ArrayList<CubridCollation> collations;
     private ArrayList<CubridColumnTypeName> columnTypeNames;
 
@@ -220,7 +220,7 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
         }
     }
 
-    public Collection<CubridOwner> getOwners() {
+    public Collection<CubridUser> getOwners() {
     	return owners;
     }
     
@@ -503,6 +503,11 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
         throws DBException {
         return structureContainer == null ? null : structureContainer.getProcedures(monitor, name);
     }
+    
+    @Override
+    public Collection<? extends CubridUser> getCubridUsers(DBRProgressMonitor monitor) throws DBException {
+        return structureContainer == null ? null : structureContainer.getCubridUsers(monitor);
+    }
 
     @Override
     public Collection<? extends CubridProcedure> getFunctionsOnly(DBRProgressMonitor monitor) throws DBException {
@@ -610,13 +615,13 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
         	columnTypeNames.add(dataType);
         }
         
-	    owners = new ArrayList<CubridOwner>();
+	    owners = new ArrayList<CubridUser>();
 	    try (JDBCSession session = DBUtils.openMetaSession(monitor, structureContainer, allObjectsPattern)) {
 		    String sql = CubridConstants.OWNER_QUERY;
 			JDBCPreparedStatement dbStat = session.prepareStatement(sql);
 			ResultSet rs = dbStat.executeQuery();
 			while(rs.next()) {
-				CubridOwner owner = new CubridOwner(this, rs.getString("name"));
+				CubridUser owner = new CubridUser(rs.getString("name"));
 	        	owners.add(owner);
 			}
 		} catch (SQLException e) {

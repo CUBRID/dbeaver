@@ -393,6 +393,14 @@ public class CubridMetaModel {
             procedureType,
            functionResultType);
     }
+    
+    public CubridUser createCubridUserImpl(
+            CubridStructContainer container,
+            String name,
+            String comment)
+    {
+        return new CubridUser(container,name, comment);
+    }
 
     public String getProcedureDDL(DBRProgressMonitor monitor, CubridProcedure sourceObject) throws DBException {
         return "-- Source code not available";
@@ -515,7 +523,14 @@ public class CubridMetaModel {
            return dbStat;
         }
     
-    
+    public JDBCStatement prepareCubridUserLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer container) 
+    		throws SQLException 
+	    {
+	    	String sql= "select * from db_user";
+	        final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+	
+	        return dbStat;
+	    }
     /**
      * Some drivers return columns, tables or other objects names with extra spaces around (like FireBird)
      * For this reason we usually trim it from our side
