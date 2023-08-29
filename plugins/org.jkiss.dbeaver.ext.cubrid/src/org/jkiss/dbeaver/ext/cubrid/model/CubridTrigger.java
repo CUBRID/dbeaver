@@ -18,31 +18,50 @@ package org.jkiss.dbeaver.ext.cubrid.model;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.dbeaver.DBException;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.DBPNamedObject2;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.meta.PropertyLength;
-import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
-import org.jkiss.dbeaver.model.struct.DBSObject;
+import org.jkiss.dbeaver.model.struct.rdb.DBSTable;
 import org.jkiss.dbeaver.model.struct.rdb.DBSTrigger;
-
-import java.util.Map;
+import java.sql.ResultSet;
 
 /**
  * CubridTrigger
  */
-public abstract class CubridTrigger<OWNER extends DBSObject> implements DBSTrigger, CubridScriptObject, DBPNamedObject2
+public class CubridTrigger implements DBSTrigger, DBPNamedObject2
 {
     @NotNull
-    private final OWNER container;
-    private String name;
+    private CubridStructContainer container;
+    private String name;  
+    private String owner;
+    private String targetOwner;
+    private String targetClass;
+    private Double priority;
+    private Integer event;
+    private Integer conditionTime;
+    private String condition;
+    private Integer actionTime;
+    private Integer actionType;
+    private String actionDefinition;
     private String description;
     protected String source;
 
-    public CubridTrigger(@NotNull OWNER container, String name, String description) {
+    public CubridTrigger(@NotNull CubridStructContainer container, CubridMetaObject triggerObject, ResultSet dbResult) {
         this.container = container;
-        this.name = name;
-        this.description = description;
+        this.name = CubridUtils.safeGetStringTrimmed(triggerObject, dbResult, CubridConstants.NAME);
+        this.owner = CubridUtils.safeGetString(triggerObject, dbResult, CubridConstants.OWNER_NAME);
+        this.targetOwner = CubridUtils.safeGetString(triggerObject, dbResult, CubridConstants.TARGET_OWNER_NAME);
+        this.targetClass = CubridUtils.safeGetString(triggerObject, dbResult, CubridConstants.TARGET_CLASS_NAME);
+        this.priority = CubridUtils.safeGetDouble(triggerObject, dbResult, CubridConstants.PRIORITY);
+        this.event = CubridUtils.safeGetInteger(triggerObject, dbResult, CubridConstants.EVENT);
+        this.conditionTime = CubridUtils.safeGetInteger(triggerObject, dbResult, CubridConstants.CONDITION_TIME);
+        this.condition = CubridUtils.safeGetString(triggerObject, dbResult, CubridConstants.CONDITION);
+        this.actionTime = CubridUtils.safeGetInteger(triggerObject, dbResult, CubridConstants.ACTION_TIME);
+        this.actionType = CubridUtils.safeGetInteger(triggerObject, dbResult, CubridConstants.ACTION_TYPE);
+        this.actionDefinition = CubridUtils.safeGetString(triggerObject, dbResult, CubridConstants.ACTION_DEFINITION);
+        this.description = CubridUtils.safeGetString(triggerObject, dbResult, CubridConstants.COMMENT);
     }
 
     @NotNull
@@ -55,6 +74,120 @@ public abstract class CubridTrigger<OWNER extends DBSObject> implements DBSTrigg
     @Override
     public void setName(String name) {
         this.name = name;
+    }
+    
+    @Property(viewable = true, editable = true, order = 10)
+    public String getOwner() {
+        return owner;
+    }
+    
+    @Property(viewable = true, editable = true, order = 15)
+    public String getTargetOwner() {
+        return targetOwner;
+    }
+    
+    @Property(viewable = true, editable = true, order = 18)
+    public String getTargetClass() {
+        return targetClass;
+    }
+    
+    @Property(viewable = true, editable = true, order = 20)
+    public Number getPriority() {
+        return priority;
+    }
+    
+    @Property(viewable = true, editable = true, order = 30)
+    public String getEvent() {
+    	if(event != null) {
+	    	switch(event) {
+	    		case 0:
+	    			return "UPDATE";
+	    		case 1:
+	    			return "UPDATE STATEMENT";
+	    		case 2:
+	    			return "DELETE";
+	    		case 3:
+	    			return "DELETE STATEMENT";
+	    		case 4:
+	    			return "INSERT";
+	    		case 5:
+	    			return "INSERT STATEMENT";
+	    		case 8:
+	    			return "COMMIT";
+	    		case 9:
+	    			return "ROLLBACK";
+	    		default:
+	    			return "";
+	    	}
+    	} else { 		
+    		return "";
+    	}
+    }
+    
+    @Property(viewable = true, editable = true, order = 30)
+    public String getConditionTime() {
+    	if(conditionTime != null) {  		
+	        switch(conditionTime) {
+			case 1:
+				return "BEFORE";
+			case 2:
+				return "AFTER";
+			case 3:
+				return "DEFERRED";
+			default:
+				return "";
+	        }
+	    } else {
+	    	return "";
+	    }
+    }
+    
+    @Property(viewable = true, editable = true, order = 40)
+    public String getCondition() {
+        return condition;
+    }
+    
+    @Property(viewable = true, editable = true, order = 50)
+    public String getActionTime() {
+    	if(actionTime != null) {
+	        switch(actionTime) {
+			case 1:
+				return "BEFORE";
+			case 2:
+				return "AFTER";
+			case 3:
+				return "DEFERRED";
+			default:
+				return "";
+	        }
+        } else {
+        	return "";
+        }
+    }
+    
+    @Property(viewable = true, editable = true, order = 60)
+    public String getActionType() {
+    	if(actionType != null) {
+	    	switch(actionType) {
+			case 1:
+				return "INSERT, UPDATE, DELETE, CALL";
+			case 2:
+				return "REJECT";
+			case 3:
+				return "INVALIDATE_TRANSACTION";
+			case 4:
+				return "PRINT";
+			default:
+				return "";
+	    	}
+    	} else {
+        	return "";
+        }
+    }
+    
+    @Property(viewable = true, editable = true, order = 70)
+    public String getActionDefinition() {
+        return actionDefinition;
     }
 
     @Nullable
@@ -77,12 +210,12 @@ public abstract class CubridTrigger<OWNER extends DBSObject> implements DBSTrigg
     }
 
     @NotNull
-    public OWNER getContainer() {
+    public CubridStructContainer getContainer() {
         return container;
     }
 
     @Override
-    public OWNER getParentObject()
+    public CubridStructContainer getParentObject()
     {
         return container;
     }
@@ -94,19 +227,10 @@ public abstract class CubridTrigger<OWNER extends DBSObject> implements DBSTrigg
         return (CubridDataSource) container.getDataSource();
     }
 
-    @Override
-    @Property(hidden = true, editable = true, updatable = true, order = -1)
-    public String getObjectDefinitionText(DBRProgressMonitor monitor, Map<String, Object> options) throws DBException
-    {
-        if (source == null) {
-            source = getDataSource().getMetaModel().getTriggerDDL(monitor, this);
-        }
-        return source;
-    }
-
-    public void setSource(String sourceText) throws DBException
-    {
-        source = sourceText;
-    }
+	@Override
+	public DBSTable getTable() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

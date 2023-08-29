@@ -800,29 +800,43 @@ public class CubridMetaModel {
     // Triggers
 
     public boolean supportsTriggers(@NotNull CubridDataSource dataSource) {
-        return false;
+        return true;
     }
 
-    public JDBCStatement prepareTableTriggersLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer cubridStructContainer, @Nullable CubridTableBase forParent) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
+    public JDBCStatement prepareTableTriggersLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer cubridStructContainer, @Nullable CubridTableBase table) throws SQLException {
+    	
+    	String sql= "select t1.*, t2.* from db_trigger t1 JOIN db_trig t2 ON t1.name = t2.trigger_name where t2.target_class_name = '"+ table.getName() + "';";
+        final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+
+        return dbStat;
     }
 
-    public CubridTrigger createTableTriggerImpl(@NotNull JDBCSession session, @NotNull CubridStructContainer cubridStructContainer, @NotNull CubridTableBase cubridTableBase, String triggerName, @NotNull JDBCResultSet resultSet) throws DBException {
-        throw new DBCFeatureNotSupportedException();
+    public CubridTrigger createTableTriggerImpl(@NotNull JDBCSession session, @NotNull CubridStructContainer container, @NotNull CubridTableBase cubridTableBase, String triggerName, @NotNull JDBCResultSet dbResult) throws DBException {
+
+    	CubridTrigger trigger = new CubridTrigger(container, null, dbResult);
+        
+        return trigger;
     }
 
     // Container triggers (not supported by default)
 
     public boolean supportsDatabaseTriggers(@NotNull CubridDataSource dataSource) {
-        return false;
+        return true;
     }
 
-    public JDBCStatement prepareContainerTriggersLoadStatement(@NotNull JDBCSession session, @Nullable CubridStructContainer forParent) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
+    public JDBCStatement prepareTriggersLoadStatement(@NotNull JDBCSession session, @Nullable CubridStructContainer forParent) throws SQLException {
+    	
+    	String sql= "select t1.*, t2.* from db_trigger t1 JOIN db_trig t2 ON t1.name = t2.trigger_name;";
+        final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+
+        return dbStat;
     }
 
-    public CubridTrigger createContainerTriggerImpl(@NotNull CubridStructContainer container, @NotNull JDBCResultSet resultSet) throws DBException {
-        throw new DBCFeatureNotSupportedException();
+    public CubridTrigger createTriggerImpl(@NotNull JDBCSession session, @NotNull CubridStructContainer container, CubridMetaObject triggerObject, @NotNull JDBCResultSet dbResult) throws DBException {
+    	
+    	CubridTrigger trigger = new CubridTrigger(container, triggerObject, dbResult);
+        
+        return trigger;
     }
 
     public List<? extends CubridTrigger> loadTriggers(DBRProgressMonitor monitor, @NotNull CubridStructContainer container, @Nullable CubridTableBase table) throws DBException {
