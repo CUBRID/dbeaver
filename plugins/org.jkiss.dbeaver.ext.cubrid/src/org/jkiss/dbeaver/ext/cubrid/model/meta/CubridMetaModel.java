@@ -847,6 +847,20 @@ public class CubridMetaModel {
         return "-- Source code not available";
     }
 
+    // User
+    public CubridUser createCubridUserImpl(CubridStructContainer container, String name, String comment)
+    {
+        return new CubridUser(container,name, comment);
+    }
+    
+    public JDBCStatement prepareCubridUserLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer container) 
+    		throws SQLException 
+    {
+    	String sql= "select * from db_user";
+        final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+
+        return dbStat;
+    }
     // Comments
 
     public boolean isTableCommentEditable() {
