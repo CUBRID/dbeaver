@@ -229,7 +229,7 @@
                         iconBig="icons/cubrid_icon_big.png"
                         class="cubrid.jdbc.driver.CUBRIDDriver"
                         sampleURL="jdbc:CUBRID:{host}:{port}:{database}:::"
-                        defaultPort="33000"
+                        defaultPort="30000"
                         description="CUBRID JDBC driver"
                         supportedConfigurationTypes="MANUAL,URL"
                         webURL="https://www.cubrid.org/manual/en/11.2/api/jdbc.html#configuration-connection"
