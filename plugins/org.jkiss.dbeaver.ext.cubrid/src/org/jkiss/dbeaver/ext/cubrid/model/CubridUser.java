@@ -108,4 +108,8 @@ public class CubridUser implements DBSObject, CubridScriptObject{
 		return this.container.getDataSource().getFunctionsOnly(monitor, name);
     }
 
+    public Collection<? extends CubridSequence> getSequences(DBRProgressMonitor monitor) throws DBException {
+		return this.container.getDataSource().getSequences(monitor, name);
+    }
+
 }

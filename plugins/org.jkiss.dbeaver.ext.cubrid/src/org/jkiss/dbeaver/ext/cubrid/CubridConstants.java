@@ -115,4 +115,15 @@ public class CubridConstants {
     public static final String OWNER_QUERY = "select name from db_user";
     public static final String OWNER_NAME = "owner_name";
     public static final String CLASS_NAME = "class_name";
+
+    public static final String UNIQUE_NAME = "unique_name";
+    public static final String OBJECT_SEQUENCE = "sequence";
+    public static final String SEQUENCE_NAME = "name";
+    public static final String COMMENT = "comment";
+    public static final String CURRENT_VALUE = "current_val";
+    public static final String MIN_VAL = "min_val";
+    public static final String MAX_VAL = "max_val";
+    public static final String INCREMENT_VAL = "increment_val";
+    public static final String CYCLIC = "cyclic";
+    public static final String CACHED_NUM = "cached_num";
 }

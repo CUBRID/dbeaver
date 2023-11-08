@@ -16,8 +16,11 @@
  */
 package org.jkiss.dbeaver.ext.cubrid.model;
 
+import java.sql.ResultSet;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPNamedObject2;
 import org.jkiss.dbeaver.model.DBPQualifiedObject;
@@ -33,21 +36,33 @@ import org.jkiss.dbeaver.model.struct.rdb.DBSSequence;
 public class CubridSequence implements DBSSequence, DBPQualifiedObject, DBPNamedObject2
 {
     private CubridStructContainer container;
+    private String unique_name;
     private String name;
     private String description;
     private Number lastValue;
     private Number minValue;
     private Number maxValue;
     private Number incrementBy;
+    private Number cyclic;
+    private Number cachedNum;
 
-    public CubridSequence(CubridStructContainer container, String name, String description, Number lastValue, Number minValue, Number maxValue, Number incrementBy) {
-        this.container = container;
-        this.name = name;
-        this.description = description;
-        this.lastValue = lastValue;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this.incrementBy = incrementBy;
+    public CubridSequence(CubridStructContainer container, CubridMetaObject sequenceObject, ResultSet dbResult) {
+    	this.container = container;
+    	if (dbResult != null) {
+	        this.unique_name = CubridUtils.safeGetString(sequenceObject, dbResult, CubridConstants.UNIQUE_NAME);
+		    this.name = CubridUtils.safeGetStringTrimmed(sequenceObject, dbResult, CubridConstants.SEQUENCE_NAME);
+		    this.description = CubridUtils.safeGetString(sequenceObject, dbResult, CubridConstants.COMMENT);
+		    this.lastValue = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.CURRENT_VALUE);
+		    this.minValue = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.MIN_VAL);
+		    this.maxValue = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.MAX_VAL);
+		    this.incrementBy = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.INCREMENT_VAL);
+		    this.cyclic = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.CYCLIC);
+		    this.cachedNum = CubridUtils.safeGetInteger(sequenceObject, dbResult, CubridConstants.CACHED_NUM);
+    	}
+    }
+
+    public String getOwner() {
+    	return unique_name != null ? this.unique_name.split("\\.")[0] : null;
     }
 
     @NotNull
@@ -133,5 +148,15 @@ public class CubridSequence implements DBSSequence, DBPQualifiedObject, DBPNamed
 
     public void setIncrementBy(Number incrementBy) {
         this.incrementBy = incrementBy;
+    }
+    
+    @Property(viewable = true, order = 6)
+    public Number getCyclic() {
+        return cyclic;
+    }
+
+    @Property(viewable = true, order = 7)
+    public Number getCachedNum() {
+        return cachedNum;
     }
 }

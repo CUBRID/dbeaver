@@ -20,6 +20,8 @@ import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
 import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBPRefreshableObject;
 import org.jkiss.dbeaver.model.DBUtils;
@@ -74,7 +76,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         this.foreignKeysCache = new ForeignKeysCache(tableCache);
         this.containerTriggerCache = new ContainerTriggerCache();
         this.tableTriggerCache = new TableTriggerCache(tableCache);
-        this.sequenceCache = new CubridSequenceCache();
+        this.sequenceCache = new CubridSequenceCache(dataSource);
         this.synonymCache = new CubridSynonymCache();
 		this.cubridUserCache = new CubridUserCache();
 
@@ -420,8 +422,18 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     }
 
     @Override
-    public Collection<? extends CubridSequence> getSequences(DBRProgressMonitor monitor) throws DBException {
-        return sequenceCache.getAllObjects(monitor, this);
+    public Collection<? extends CubridSequence> getSequences(DBRProgressMonitor monitor, String owner) throws DBException {
+    	List<? extends CubridSequence> sequences = sequenceCache.getAllObjects(monitor, this);
+        if (sequences != null) {
+            List<CubridSequence> filtered = new ArrayList<>();
+            for (CubridSequence sequence : sequences) {
+            	if(owner.toLowerCase().equals(sequence.getOwner())) {
+            		filtered.add((CubridSequence) sequence);
+            	}
+            }
+            return filtered;
+        }
+        return null;
     }
 
     public CubridSequence getSequence(DBRProgressMonitor monitor, String name) throws DBException {
@@ -584,6 +596,13 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
 
     class CubridSequenceCache extends JDBCObjectCache<CubridObjectContainer, CubridSequence> {
 
+    	final CubridMetaObject sequenceObject;
+
+    	protected CubridSequenceCache(CubridDataSource dataSource)
+        {
+            this.sequenceObject = dataSource.getMetaObject(CubridConstants.OBJECT_SEQUENCE);
+        }
+
         @NotNull
         @Override
         protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session, @NotNull CubridObjectContainer container) throws SQLException {
@@ -593,7 +612,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         @Nullable
         @Override
         protected CubridSequence fetchObject(@NotNull JDBCSession session, @NotNull CubridObjectContainer container, @NotNull JDBCResultSet resultSet) throws SQLException, DBException {
-            return container.getDataSource().getMetaModel().createSequenceImpl(session, container, resultSet);
+            return container.getDataSource().getMetaModel().createSequenceImpl(session, container, sequenceObject, resultSet);
         }
 
         @Override

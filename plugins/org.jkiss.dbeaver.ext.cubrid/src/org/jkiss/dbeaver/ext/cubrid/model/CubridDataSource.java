@@ -497,8 +497,8 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     }
 
     @Override
-    public Collection<? extends CubridSequence> getSequences(DBRProgressMonitor monitor) throws DBException {
-        return structureContainer == null ? null : structureContainer.getSequences(monitor);
+    public Collection<? extends CubridSequence> getSequences(DBRProgressMonitor monitor, String owner) throws DBException {
+        return structureContainer == null ? null : structureContainer.getSequences(monitor, owner);
     }
 
     @Override
