@@ -16,31 +16,34 @@
  */
 package org.jkiss.dbeaver.ext.cubrid.model;
 
+import java.sql.ResultSet;
 import org.jkiss.code.NotNull;
 import org.jkiss.code.Nullable;
-import org.jkiss.dbeaver.model.DBPEvaluationContext;
+import org.jkiss.dbeaver.ext.cubrid.CubridConstants;
+import org.jkiss.dbeaver.ext.cubrid.model.meta.CubridMetaObject;
 import org.jkiss.dbeaver.model.DBPNamedObject2;
-import org.jkiss.dbeaver.model.DBPQualifiedObject;
-import org.jkiss.dbeaver.model.DBUtils;
 import org.jkiss.dbeaver.model.meta.Property;
 import org.jkiss.dbeaver.model.meta.PropertyLength;
-import org.jkiss.dbeaver.model.struct.DBSAlias;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 
 /**
  * Cubrid synonym (alias).
  * There is no synonyms support in JDBC API. Each Cubrid-based extension must provide its own implementation.
  */
-public abstract class CubridSynonym implements DBSAlias, DBSObject, DBPQualifiedObject, DBPNamedObject2
+public class CubridSynonym implements DBSObject, DBPNamedObject2
 {
     private CubridStructContainer container;
     private String name;
     private String description;
+    private String owner;
+    private String targetName;
 
-    protected CubridSynonym(CubridStructContainer container, String name, String description) {
+    public CubridSynonym(CubridStructContainer container, CubridMetaObject synonymObject, ResultSet dbResult) {
         this.container = container;
-        this.name = name;
-        this.description = description;
+        this.name = CubridUtils.safeGetString(synonymObject, dbResult, CubridConstants.SYNONYM_NAME);
+        this.owner = CubridUtils.safeGetString(synonymObject, dbResult, CubridConstants.SYNONYM_OWNER_NAME);
+        this.targetName = CubridUtils.safeGetString(synonymObject, dbResult, CubridConstants.TARGET_NAME);
+        this.description = CubridUtils.safeGetString(synonymObject, dbResult, CubridConstants.COMMENT);
     }
 
     @NotNull
@@ -58,6 +61,16 @@ public abstract class CubridSynonym implements DBSAlias, DBSObject, DBPQualified
     @Override
     public boolean isPersisted() {
         return true;
+    }
+
+    @Property(viewable = true, order = 2)
+    public String getOwner() {
+        return owner;
+    }
+
+    @Property(viewable = true, order = 3)
+    public String getTargetName() {
+        return targetName;
     }
 
     @Nullable
@@ -78,14 +91,4 @@ public abstract class CubridSynonym implements DBSAlias, DBSObject, DBPQualified
     public CubridDataSource getDataSource() {
         return container.getDataSource();
     }
-
-    @NotNull
-    @Override
-    public String getFullyQualifiedName(DBPEvaluationContext context) {
-        return DBUtils.getFullQualifiedName(getDataSource(),
-            container.getCatalog(),
-            container.getSchema(),
-            this);
-    }
-
 }

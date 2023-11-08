@@ -765,11 +765,14 @@ public class CubridMetaModel {
     }
 
     public JDBCStatement prepareSynonymsLoadStatement(@NotNull JDBCSession session, @NotNull CubridStructContainer container) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
+    	String sql= "select * from db_synonym";
+        final JDBCPreparedStatement dbStat = session.prepareStatement(sql);
+        return dbStat;
     }
 
-    public CubridSynonym createSynonymImpl(@NotNull JDBCSession session, @NotNull CubridStructContainer container, @NotNull JDBCResultSet dbResult) throws DBException {
-        throw new DBCFeatureNotSupportedException();
+    public CubridSynonym createSynonymImpl(@NotNull JDBCSession session, @NotNull CubridStructContainer container, CubridMetaObject synonymObject, @NotNull JDBCResultSet dbResult) throws DBException {
+    	CubridSynonym synonym = new CubridSynonym(container, synonymObject, dbResult);
+        return synonym;
     }
 
     //////////////////////////////////////////////////////

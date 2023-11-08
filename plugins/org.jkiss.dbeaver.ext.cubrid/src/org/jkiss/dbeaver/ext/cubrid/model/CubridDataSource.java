@@ -502,8 +502,8 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     }
 
     @Override
-    public Collection<? extends CubridSynonym> getSynonyms(DBRProgressMonitor monitor) throws DBException {
-        return structureContainer == null ? null : structureContainer.getSynonyms(monitor);
+    public Collection<? extends CubridSynonym> getSynonyms(DBRProgressMonitor monitor, String owner) throws DBException {
+        return structureContainer == null ? null : structureContainer.getSynonyms(monitor, owner);
     }
 
     @Override

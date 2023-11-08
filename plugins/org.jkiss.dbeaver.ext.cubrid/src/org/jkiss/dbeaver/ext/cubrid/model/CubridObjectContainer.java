@@ -77,7 +77,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         this.containerTriggerCache = new ContainerTriggerCache();
         this.tableTriggerCache = new TableTriggerCache(tableCache);
         this.sequenceCache = new CubridSequenceCache(dataSource);
-        this.synonymCache = new CubridSynonymCache();
+        this.synonymCache = new CubridSynonymCache(dataSource);
 		this.cubridUserCache = new CubridUserCache();
 
     }
@@ -441,8 +441,18 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     }
 
     @Override
-    public Collection<? extends CubridSynonym> getSynonyms(DBRProgressMonitor monitor) throws DBException {
-        return synonymCache.getAllObjects(monitor, this);
+    public Collection<? extends CubridSynonym> getSynonyms(DBRProgressMonitor monitor, String owner) throws DBException {
+    	List<? extends CubridSynonym> synonyms = synonymCache.getAllObjects(monitor, this);
+        if (synonyms != null) {
+            List<CubridSynonym> filtered = new ArrayList<>();
+            for (CubridSynonym synonym : synonyms) {
+            	if(owner.toUpperCase().equals(synonym.getOwner())) {
+            		filtered.add((CubridSynonym) synonym);
+            	}
+            }
+            return filtered;
+        }
+        return null;
     }
 
     public CubridSynonym getSynonym(DBRProgressMonitor monitor, String name) throws DBException {
@@ -474,7 +484,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         throws DBException {
         List<DBSObject> childrenList = new ArrayList<>(getTables(monitor));
         if (dataSource.getMetaModel().supportsSynonyms(dataSource)) {
-            childrenList.addAll(getSynonyms(monitor));
+            childrenList.addAll(getSynonyms(monitor, dataSource.getContainer().getConnectionConfiguration().getUserName()));
         }
         return childrenList;
     }
@@ -623,6 +633,13 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
 
     class CubridSynonymCache extends JDBCObjectCache<CubridObjectContainer, CubridSynonym> {
 
+    	final CubridMetaObject synonymObject;
+
+    	protected CubridSynonymCache(CubridDataSource dataSource)
+        {
+            this.synonymObject = dataSource.getMetaObject(CubridConstants.OBJECT_SYNONYM);
+        }
+
         @NotNull
         @Override
         protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session, @NotNull CubridObjectContainer container) throws SQLException {
@@ -632,7 +649,7 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
         @Nullable
         @Override
         protected CubridSynonym fetchObject(@NotNull JDBCSession session, @NotNull CubridObjectContainer container, @NotNull JDBCResultSet resultSet) throws SQLException, DBException {
-            return container.getDataSource().getMetaModel().createSynonymImpl(session, container, resultSet);
+            return container.getDataSource().getMetaModel().createSynonymImpl(session, container, synonymObject, resultSet);
         }
     }
     

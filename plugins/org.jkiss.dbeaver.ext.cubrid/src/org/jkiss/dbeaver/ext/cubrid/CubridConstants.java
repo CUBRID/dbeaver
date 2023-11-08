@@ -126,4 +126,8 @@ public class CubridConstants {
     public static final String INCREMENT_VAL = "increment_val";
     public static final String CYCLIC = "cyclic";
     public static final String CACHED_NUM = "cached_num";
+    public static final String OBJECT_SYNONYM = "synonym";
+    public static final String SYNONYM_NAME ="synonym_name";
+    public static final String SYNONYM_OWNER_NAME ="synonym_owner_name";
+    public static final String TARGET_NAME = "target_name";
 }
