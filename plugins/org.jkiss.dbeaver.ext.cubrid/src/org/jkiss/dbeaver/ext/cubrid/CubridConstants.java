@@ -90,6 +90,8 @@ public class CubridConstants {
     public static final String TERM_CATALOG = "catalog";
     public static final String TERM_SCHEMA = "schema";
     public static final String TERM_PROCEDURE = "procedure";
+    public static final String RETURN_TYPE = "return_type";
+    public static final String TERM_FUNCTION = "function";
 
     public static final String OBJECT_CATALOG = "catalog";
     public static final String OBJECT_SCHEMA = "schema";
@@ -109,6 +111,7 @@ public class CubridConstants {
 
     public static final String BASE_CONSTRAINT_NAME = "new_key";
 
+    public static final String OWNER = "owner";
     public static final String OWNER_QUERY = "select name from db_user";
     public static final String OWNER_NAME = "owner_name";
     public static final String CLASS_NAME = "class_name";

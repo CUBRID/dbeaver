@@ -51,7 +51,8 @@ public class CubridProcedure extends AbstractProcedure<CubridDataSource, CubridS
     private DBSProcedureType procedureType;
     private List<CubridProcedureParameter> columns;
     private String source;
-    private CubridFunctionResultType functionResultType;
+    private String functionResultType;
+    private String owner;
 
     public CubridProcedure(
         CubridStructContainer container,
@@ -59,12 +60,19 @@ public class CubridProcedure extends AbstractProcedure<CubridDataSource, CubridS
         String specificName,
         String description,
         DBSProcedureType procedureType,
-        CubridFunctionResultType functionResultType)
+        String functionResultType,
+        String owner)
     {
         super(container, true, procedureName, description);
         this.procedureType = procedureType;
-        this.functionResultType = functionResultType;
+        this.functionResultType = functionResultType.toUpperCase();
         this.specificName = specificName;
+        this.owner = owner;
+    }
+
+    public String getOwner()
+    {
+        return owner;
     }
 
     @Property(viewable = true, order = 3)
@@ -93,7 +101,7 @@ public class CubridProcedure extends AbstractProcedure<CubridDataSource, CubridS
     }
 
     @Property(viewable = true, order = 7)
-    public CubridFunctionResultType getFunctionResultType() {
+    public String getFunctionResultType() {
         return functionResultType;
     }
 

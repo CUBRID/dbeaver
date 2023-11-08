@@ -87,5 +87,25 @@ public class CubridUser implements DBSObject, CubridScriptObject{
     public Collection<CubridTableIndex> getIndexes(DBRProgressMonitor monitor) throws DBException {
 		return this.container.getDataSource().getIndexes(monitor, name);
     }
+    
+    public Collection<? extends CubridProcedure> getProcedures(DBRProgressMonitor monitor) throws DBException {
+		return this.container.getDataSource().getProcedures(monitor);
+    }
+
+    public Collection<? extends CubridProcedure> getProceduresOnly(DBRProgressMonitor monitor) throws DBException {
+		return this.container.getDataSource().getProceduresOnly(monitor, name);
+    }
+
+    public CubridProcedure getProcedure(DBRProgressMonitor monitor, String uniqueName) throws DBException {
+		return this.container.getDataSource().getProcedure(monitor, uniqueName);
+    }
+
+    public Collection<CubridProcedure> getProcedures(DBRProgressMonitor monitor, String name) throws DBException {
+		return this.container.getDataSource().getProcedures(monitor, name);
+    }
+
+    public Collection<? extends CubridProcedure> getFunctionsOnly(DBRProgressMonitor monitor) throws DBException {
+		return this.container.getDataSource().getFunctionsOnly(monitor, name);
+    }
 
 }

@@ -398,13 +398,10 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     }
 
     @Override
-    public List<? extends CubridProcedure> getProceduresOnly(DBRProgressMonitor monitor) throws DBException {
-        if (!dataSource.splitProceduresAndFunctions()) {
-            return getProcedures(monitor);
-        }
+    public List<? extends CubridProcedure> getProceduresOnly(DBRProgressMonitor monitor, String owner) throws DBException {
         List<CubridProcedure> filteredProcedures = new ArrayList<>();
         for (CubridProcedure proc : CommonUtils.safeList(getProcedures(monitor))) {
-            if (proc.getProcedureType() == DBSProcedureType.PROCEDURE) {
+            if (proc.getProcedureType() == DBSProcedureType.PROCEDURE && owner.toUpperCase().equals(proc.getOwner())) {
                 filteredProcedures.add(proc);
             }
         }
@@ -412,10 +409,10 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     }
 
     @Override
-    public Collection<? extends CubridProcedure> getFunctionsOnly(DBRProgressMonitor monitor) throws DBException {
+    public Collection<? extends CubridProcedure> getFunctionsOnly(DBRProgressMonitor monitor, String owner) throws DBException {
         List<CubridProcedure> filteredProcedures = new ArrayList<>();
         for (CubridProcedure proc : CommonUtils.safeList(getProcedures(monitor))) {
-            if (proc.getProcedureType() == DBSProcedureType.FUNCTION) {
+            if (proc.getProcedureType() == DBSProcedureType.FUNCTION && owner.toUpperCase().equals(proc.getOwner())) {
                 filteredProcedures.add(proc);
             }
         }

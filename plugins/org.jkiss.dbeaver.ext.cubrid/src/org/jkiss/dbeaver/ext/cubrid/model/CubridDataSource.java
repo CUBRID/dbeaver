@@ -476,8 +476,8 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     }
 
     @Override
-    public Collection<? extends CubridProcedure> getProceduresOnly(DBRProgressMonitor monitor) throws DBException {
-        return structureContainer == null ? null : structureContainer.getProceduresOnly(monitor);
+    public Collection<? extends CubridProcedure> getProceduresOnly(DBRProgressMonitor monitor, String owner) throws DBException {
+        return structureContainer == null ? null : structureContainer.getProceduresOnly(monitor, owner);
     }
 
     @Override
@@ -492,8 +492,8 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     }
 
     @Override
-    public Collection<? extends CubridProcedure> getFunctionsOnly(DBRProgressMonitor monitor) throws DBException {
-        return structureContainer == null ? null : structureContainer.getFunctionsOnly(monitor);
+    public Collection<? extends CubridProcedure> getFunctionsOnly(DBRProgressMonitor monitor, String owner) throws DBException {
+        return structureContainer == null ? null : structureContainer.getFunctionsOnly(monitor, owner);
     }
 
     @Override

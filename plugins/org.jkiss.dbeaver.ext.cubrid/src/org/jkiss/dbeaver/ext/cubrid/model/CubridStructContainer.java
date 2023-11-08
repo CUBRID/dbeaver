@@ -80,13 +80,13 @@ public interface CubridStructContainer extends DBSObjectContainer, DBSProcedureC
 
     Collection<? extends CubridProcedure> getProcedures(DBRProgressMonitor monitor) throws DBException;
 
-    Collection<? extends CubridProcedure> getProceduresOnly(DBRProgressMonitor monitor) throws DBException;
+    Collection<? extends CubridProcedure> getProceduresOnly(DBRProgressMonitor monitor, String owner) throws DBException;
 
     CubridProcedure getProcedure(DBRProgressMonitor monitor, String uniqueName) throws DBException;
 
     Collection<? extends CubridProcedure> getProcedures(DBRProgressMonitor monitor, String name) throws DBException;
 
-    Collection<? extends CubridProcedure> getFunctionsOnly(DBRProgressMonitor monitor) throws DBException;
+    Collection<? extends CubridProcedure> getFunctionsOnly(DBRProgressMonitor monitor, String owner) throws DBException;
 
     Collection<? extends CubridSequence> getSequences(DBRProgressMonitor monitor) throws DBException;
 
