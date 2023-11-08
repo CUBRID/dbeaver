@@ -74,7 +74,7 @@ public interface CubridStructContainer extends DBSObjectContainer, DBSProcedureC
 
     CubridTableBase getTable(DBRProgressMonitor monitor, String name) throws DBException;
 
-    Collection<? extends CubridTableIndex> getIndexes(DBRProgressMonitor monitor) throws DBException;
+    Collection<? extends CubridTableIndex> getIndexes(DBRProgressMonitor monitor, String owner) throws DBException;
 
     Collection<? extends CubridPackage> getPackages(DBRProgressMonitor monitor) throws DBException;
 

@@ -464,9 +464,9 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     }
 
     @Override
-    public Collection<CubridTableIndex> getIndexes(DBRProgressMonitor monitor)
+    public Collection<CubridTableIndex> getIndexes(DBRProgressMonitor monitor, String owner)
         throws DBException {
-        return structureContainer == null ? null : structureContainer.getIndexes(monitor);
+        return structureContainer == null ? null : structureContainer.getIndexes(monitor, owner);
     }
 
     @Override

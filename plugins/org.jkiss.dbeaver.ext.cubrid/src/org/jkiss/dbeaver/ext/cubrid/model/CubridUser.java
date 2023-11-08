@@ -1,5 +1,6 @@
 package org.jkiss.dbeaver.ext.cubrid.model;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -81,6 +82,10 @@ public class CubridUser implements DBSObject, CubridScriptObject{
     
     public List<? extends CubridView> getSystemViews(DBRProgressMonitor monitor) throws DBException {
 		return this.container.getDataSource().getSystemViews(monitor, name);
+    }
+    
+    public Collection<CubridTableIndex> getIndexes(DBRProgressMonitor monitor) throws DBException {
+		return this.container.getDataSource().getIndexes(monitor, name);
     }
 
 }

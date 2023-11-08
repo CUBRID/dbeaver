@@ -221,10 +221,16 @@ public abstract class CubridObjectContainer implements CubridStructContainer, DB
     }
 
     @Override
-    public Collection<CubridTableIndex> getIndexes(DBRProgressMonitor monitor)
+    public Collection<CubridTableIndex> getIndexes(DBRProgressMonitor monitor, String owner)
         throws DBException {
         cacheIndexes(monitor, true);
-        return indexCache.getObjects(monitor, this, null);
+        List<CubridTableIndex> filtered = new ArrayList<>();
+    	for (CubridTableIndex index : indexCache.getObjects(monitor, this, null)) {
+    		if (owner.equals(index.getTable().getOwner().getName())) {
+    			filtered.add(index);
+    		}
+    	}
+        return filtered;
     }
 
     private void cacheIndexes(DBRProgressMonitor monitor, boolean readFromTables)
