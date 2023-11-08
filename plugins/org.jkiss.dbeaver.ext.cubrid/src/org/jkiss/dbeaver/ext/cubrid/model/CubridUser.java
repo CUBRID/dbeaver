@@ -115,4 +115,12 @@ public class CubridUser implements DBSObject, CubridScriptObject{
     public Collection<? extends CubridSynonym> getSynonyms(DBRProgressMonitor monitor) throws DBException {
 		return this.container.getDataSource().getSynonyms(monitor, name);
     }
+
+    public Collection<? extends CubridTrigger> getTriggers(DBRProgressMonitor monitor) throws DBException {
+		return this.container.getDataSource().getTriggers(monitor, name);
+    }
+
+    public Collection<? extends CubridTrigger> getTableTriggers(DBRProgressMonitor monitor) throws DBException {
+		return this.container.getDataSource().getTableTriggers(monitor);
+    }
 }

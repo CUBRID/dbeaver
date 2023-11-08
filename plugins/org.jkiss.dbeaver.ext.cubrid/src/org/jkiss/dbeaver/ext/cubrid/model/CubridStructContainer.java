@@ -92,7 +92,7 @@ public interface CubridStructContainer extends DBSObjectContainer, DBSProcedureC
 
     Collection<? extends CubridSynonym> getSynonyms(DBRProgressMonitor monitor, String owner) throws DBException;
 
-    Collection<? extends CubridTrigger> getTriggers(DBRProgressMonitor monitor) throws DBException;
+    Collection<? extends CubridTrigger> getTriggers(DBRProgressMonitor monitor, String owner) throws DBException;
 
     Collection<? extends CubridTrigger> getTableTriggers(DBRProgressMonitor monitor) throws DBException;
 

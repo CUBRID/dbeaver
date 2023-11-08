@@ -507,8 +507,8 @@ public class CubridDataSource extends JDBCDataSource implements DBPTermProvider,
     }
 
     @Override
-    public Collection<? extends CubridTrigger> getTriggers(DBRProgressMonitor monitor) throws DBException {
-        return structureContainer == null ? null : structureContainer.getTriggers(monitor);
+    public Collection<? extends CubridTrigger> getTriggers(DBRProgressMonitor monitor, String owner) throws DBException {
+        return structureContainer == null ? null : structureContainer.getTriggers(monitor, owner);
     }
 
     @Override

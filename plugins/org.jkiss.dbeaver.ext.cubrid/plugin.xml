@@ -56,7 +56,7 @@
 	                                        </items>
 	                                    </items>
 	                                </folder>
-	                                <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridTableTrigger" label="%tree.triggers.node.name" icon="#triggers" description="%tree.triggers.node.tip" visibleIf="object.dataSource.metaModel.supportsTriggers(object.dataSource)">
+	                                <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridTrigger" label="%tree.triggers.node.name" icon="#triggers" description="%tree.triggers.node.tip">
 	                                    <items label="%tree.trigger.node.name" path="trigger" property="triggers" icon="#trigger"/>
 	                                </folder>
 	                                <items label="%tree.sub_table.node.name" optional="true" path="subtable" property="subTables" icon="#table" recursive=".." visibleIf="!object.view">
@@ -92,7 +92,7 @@
 		                                        </items>
 		                                    </items>
 		                                </folder>
-		                                <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridTableTrigger" label="%tree.triggers.node.name" icon="#triggers" description="%tree.triggers.node.tip" visibleIf="object.dataSource.metaModel.supportsTriggers(object.dataSource)">
+		                                <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridTrigger" label="%tree.triggers.node.name" icon="#triggers" description="%tree.triggers.node.tip">
 		                                    <items label="%tree.trigger.node.name" path="trigger" property="triggers" icon="#trigger"/>
 		                                </folder>
 		                                <items label="%tree.sub_table.node.name" optional="true" path="subtable" property="subTables" icon="#table" recursive=".." visibleIf="!object.view">
@@ -139,6 +139,9 @@
 	                        <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridSynonym" label="%tree.synonyms.node.name" icon="#synonyms" description="%tree.synonyms.node.tip">
 	                            <items label="%tree.synonym.node.name" path="synonym" property="synonyms" icon="#synonym">
 	                            </items>
+	                        </folder>
+	                        <folder type="org.jkiss.dbeaver.ext.cubrid.model.CubridTrigger" label="%tree.triggers.node.name" icon="#triggers" description="%tree.globalTriggers.node.tip">
+	                            <items label="%tree.trigger.node.name" path="trigger" property="triggers" icon="#trigger"/>
 	                        </folder>
 	                	</items>
                     </items>
